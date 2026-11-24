@@ -24,7 +24,7 @@ export const portfolio = {
     role: 'Portafolio · 2026 (BETA)',
     sceneTag: '',
     statement: {
-      lead: 'Dev Jr',
+      lead: 'Dev.Jr',
       accent: 'en proceso.',
     },
     intro:
