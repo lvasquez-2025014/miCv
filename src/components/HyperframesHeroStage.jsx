@@ -129,8 +129,8 @@ function HyperframesLiteStage() {
               className="hf-bg-photo"
               src="/hyperframes/hero-mobile.jpg"
               alt=""
-              width={1280}
-              height={720}
+              width={2560}
+              height={1440}
               decoding="async"
               fetchPriority="high"
               draggable={false}
@@ -273,8 +273,8 @@ function HyperframesRichStage({ introReady, tier, reducedMotion }) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return undefined;
 
-    const maxDpr = isMobile ? 1 : 1.5;
-    const minFrameMs = isMobile ? 33 : 16;
+    const maxDpr = isMobile ? 1.5 : 1.5;
+    const minFrameMs = isMobile ? 30 : 16;
 
     let width = 0;
     let height = 0;
@@ -704,8 +704,8 @@ function HyperframesRichStage({ introReady, tier, reducedMotion }) {
               className="hf-bg-photo"
               src={isMobile ? '/hyperframes/hero-mobile.jpg' : '/hyperframes/hero-4k.jpg'}
               alt=""
-              width={isMobile ? 1280 : 3840}
-              height={isMobile ? 720 : 2160}
+              width={isMobile ? 2560 : 3840}
+              height={isMobile ? 1440 : 2160}
               decoding="async"
               fetchPriority="high"
               draggable={false}

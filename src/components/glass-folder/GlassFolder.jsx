@@ -87,9 +87,9 @@ export default function GlassFolder({
     typeof document !== 'undefined' ? document.documentElement.dataset.perf || 'high' : 'high';
   const density =
     perfTier === 'lite'
-      ? Math.max(0.55, 0.65 * k)
+      ? Math.max(0.75, 0.85 * k)
       : perfTier === 'medium'
-        ? Math.max(0.7, 0.9 * k)
+        ? Math.min(1.25, Math.max(1, dpr)) * k
         : Math.min(1.5, Math.max(1, dpr)) * k;
 
   // Ensamblaje al entrar en pantalla

@@ -26,16 +26,43 @@ function serializeDoc(doc) {
   };
 }
 
-function parseBody(req) {
-  if (!req.body) return {};
-  if (typeof req.body === 'string') {
+async function readJsonBody(req) {
+  if (req.body !== undefined && req.body !== null) {
+    if (typeof req.body === 'string') {
+      try {
+        return JSON.parse(req.body);
+      } catch {
+        return {};
+      }
+    }
+    if (Buffer.isBuffer(req.body)) {
+      try {
+        return JSON.parse(req.body.toString('utf8'));
+      } catch {
+        return {};
+      }
+    }
+    if (typeof req.body === 'object') {
+      return req.body;
+    }
+  }
+
+  // Fallback si el runtime entrega el stream sin pre-parsear
+  if (req && typeof req[Symbol.asyncIterator] === 'function') {
+    const chunks = [];
+    for await (const chunk of req) {
+      chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    }
+    const raw = Buffer.concat(chunks).toString('utf8').trim();
+    if (!raw) return {};
     try {
-      return JSON.parse(req.body);
+      return JSON.parse(raw);
     } catch {
       return {};
     }
   }
-  return typeof req.body === 'object' ? req.body : {};
+
+  return {};
 }
 
 export default async function handler(req, res) {
@@ -56,8 +83,13 @@ export default async function handler(req, res) {
   try {
     collection = await getAppreciationCollection();
   } catch (err) {
-    console.error('[api/appreciation] MongoDB connection error:', err?.message || err);
-    return res.status(503).json({ error: 'Database connection unavailable', configured: true });
+    const reason = err?.codeName || err?.name || 'ConnectionError';
+    console.error('[api/appreciation] MongoDB connection error:', reason, err?.message || err);
+    return res.status(503).json({
+      error: 'Database connection unavailable',
+      configured: true,
+      reason,
+    });
   }
 
   if (!collection) {
@@ -73,7 +105,7 @@ export default async function handler(req, res) {
       return res.status(200).json(serializeDoc(doc));
     }
 
-    const body = parseBody(req);
+    const body = await readJsonBody(req);
     const type = String(body.type || '');
     const now = new Date();
 

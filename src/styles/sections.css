@@ -2575,11 +2575,11 @@
   transform: none;
 }
 
-/* Alivio GPU específico en móviles de gama baja (data-perf="lite") */
+/* Alivio GPU moderado en gama muy baja sin sacrificar estética Liquid Glass */
 html[data-perf='lite'] .modal-backdrop {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: rgba(3, 5, 7, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(3, 5, 7, 0.8);
 }
 
 html[data-perf='lite'] .filter-pill,
@@ -2588,8 +2588,8 @@ html[data-perf='lite'] .btn-storm-glass,
 html[data-perf='lite'] .hero__role-pill,
 html[data-perf='lite'] .project-modal__caption,
 html[data-perf='lite'] .live-frame__status {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 html[data-perf='lite'] .project-pedestal__aura,

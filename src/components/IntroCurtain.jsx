@@ -113,8 +113,8 @@ export function IntroCurtain({ identity, reducedMotion, perf, onComplete }) {
               logo={identity.introLogo || undefined}
               loop={false}
               speed={1.2}
-              tileSize={isMobile ? 220 : 280}
-              maxDpr={isMobile ? 1 : 2}
+              tileSize={isMobile ? 240 : 280}
+              maxDpr={isMobile ? 1.5 : 2}
               onFinish={handleRevealFinish}
               className="intro-curtain__stage"
               label={identity.isPlaceholder ? 'Animación de apertura' : identity.name}

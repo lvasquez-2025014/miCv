@@ -112,7 +112,10 @@ export async function fetchRemoteAppreciation(endpoint, signal) {
       cache: 'no-store',
       signal,
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.warn(`[appreciation] GET ${endpoint} respondió HTTP ${response.status}`);
+      return null;
+    }
     const ct = response.headers.get('content-type') || '';
     if (!ct.includes('application/json')) return null;
     const data = await response.json();
@@ -140,7 +143,10 @@ export async function sendRemoteAppreciation(endpoint, payload) {
       },
       body: JSON.stringify(payload),
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.warn(`[appreciation] POST ${endpoint} respondió HTTP ${response.status}`);
+      return null;
+    }
     const ct = response.headers.get('content-type') || '';
     if (!ct.includes('application/json')) return null;
     const data = await response.json().catch(() => null);

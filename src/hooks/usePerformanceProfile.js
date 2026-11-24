@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Clasificación adaptativa de rendimiento:
- * - 'lite': móviles de gama baja (<= 4 GB RAM o <= 4 hilos), modo ahorro de datos o movimiento reducido.
- * - 'medium': móviles y tablets estándar (pantalla táctil / viewport compacto).
- * - 'high': escritorio o hardware con puntero fino y capacidad completa.
+ * Clasificación equilibrada de rendimiento sin sacrificar calidad visual en móviles normales:
+ * - 'lite': únicamente teléfonos muy limitados (<= 2 GB RAM, <= 2 hilos, o 4 hilos con <= 3 GB RAM),
+ *   modo ahorro de datos, red 2G o movimiento reducido.
+ * - 'medium': la gran mayoría de celulares y tablets (conserva QHD, Liquid Glass y Canvas VFX fluido).
+ * - 'high': escritorio o hardware de gama alta con puntero fino.
  */
 export function detectPerformanceTier() {
   if (typeof window === 'undefined') return 'high';
@@ -16,12 +17,7 @@ export function detectPerformanceTier() {
 
   const nav = typeof navigator !== 'undefined' ? navigator : {};
   const conn = nav.connection || nav.mozConnection || nav.webkitConnection;
-  if (
-    conn?.saveData ||
-    conn?.effectiveType === '2g' ||
-    conn?.effectiveType === 'slow-2g' ||
-    conn?.effectiveType === '3g'
-  ) {
+  if (conn?.saveData || conn?.effectiveType === '2g' || conn?.effectiveType === 'slow-2g') {
     return 'lite';
   }
 
@@ -36,8 +32,7 @@ export function detectPerformanceTier() {
   }
 
   if (isMobileLike) {
-    const narrowTouch = isCoarse && Math.min(window.innerWidth, window.screen?.width || 999) <= 380;
-    if ((cores > 0 && cores <= 4) || (memory > 0 && memory <= 4) || narrowTouch) {
+    if (cores > 0 && cores <= 4 && memory > 0 && memory <= 3) {
       return 'lite';
     }
     return 'medium';
@@ -82,4 +77,3 @@ export function usePerformanceProfile() {
     isHigh: tier === 'high',
   };
 }
-
