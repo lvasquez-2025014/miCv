@@ -1,0 +1,137 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #0a0e12;
+    }
+
+    .camera-rig {
+      position: absolute;
+      inset: 0;
+      transform-origin: 48% 35%;
+    }
+
+    .bg-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .storm-flash {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 52% 28%, rgba(210, 232, 240, 0.38) 0%, rgba(150, 185, 200, 0.12) 45%, rgba(0, 0, 0, 0) 75%);
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .god-rays {
+      position: absolute;
+      top: -25%;
+      left: 15%;
+      width: 75%;
+      height: 160%;
+      background: linear-gradient(112deg, rgba(255, 255, 255, 0) 0%, rgba(220, 238, 242, 0.14) 48%, rgba(255, 255, 255, 0) 100%);
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .embers-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .ember {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 235, 195, 0.9) 0%, rgba(235, 175, 110, 0.25) 65%, rgba(0, 0, 0, 0) 100%);
+      mix-blend-mode: screen;
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 42%, rgba(0, 0, 0, 0) 42%, rgba(5, 8, 10, 0.72) 100%);
+      pointer-events: none;
+    }
+  </style>
+
+  <div id="root" data-composition-id="hero-scene" data-width="3840" data-height="2160">
+    <div id="clip-camera" class="clip" data-start="0" data-duration="8" data-track-index="1"
+      data-layout-allow-overflow="true">
+      <div class="camera-rig">
+        <img class="bg-photo" src="assets/hero.jpg" alt="Hero silhouette" />
+      </div>
+    </div>
+
+    <div id="clip-storm" class="clip" data-start="0" data-duration="8" data-track-index="2" data-layout-ignore="true">
+      <div class="storm-flash"></div>
+    </div>
+
+    <div id="clip-rays" class="clip" data-start="0" data-duration="8" data-track-index="3" data-layout-ignore="true">
+      <div class="god-rays"></div>
+    </div>
+
+    <div id="clip-embers" class="clip" data-start="0" data-duration="8" data-track-index="4" data-layout-ignore="true">
+      <div class="embers-layer">
+        <div class="ember" style="left:8%;top:72%;width:8px;height:8px;"></div>
+        <div class="ember" style="left:22%;top:84%;width:6px;height:6px;"></div>
+        <div class="ember" style="left:36%;top:66%;width:10px;height:10px;"></div>
+        <div class="ember" style="left:58%;top:78%;width:7px;height:7px;"></div>
+        <div class="ember" style="left:74%;top:68%;width:9px;height:9px;"></div>
+        <div class="ember" style="left:88%;top:80%;width:6px;height:6px;"></div>
+      </div>
+    </div>
+
+    <div id="clip-vignette" class="clip" data-start="0" data-duration="8" data-track-index="5"
+      data-layout-ignore="true">
+      <div class="vignette"></div>
+    </div>
+  </div>
+
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo(
+      ".camera-rig",
+      { scale: 1.0, x: 0, y: 0 },
+      { scale: 1.12, x: 10, y: 12, duration: 7.9, ease: "sine.inOut" },
+      0
+    );
+
+    tl.fromTo(
+      ".storm-flash",
+      { opacity: 0.1 },
+      { opacity: 0.75, duration: 0.35, repeat: 2, yoyo: true, repeatDelay: 2.2, ease: "power2.inOut" },
+      1.1
+    );
+
+    tl.fromTo(
+      ".god-rays",
+      { x: -360, opacity: 0.2 },
+      { x: 420, opacity: 0.85, duration: 7.5, ease: "sine.inOut" },
+      0.2
+    );
+
+    tl.fromTo(
+      ".ember",
+      { x: 0, y: 0, opacity: 0.2 },
+      { x: -320, y: -260, opacity: 0.9, duration: 7.5, stagger: 0.2, ease: "none" },
+      0
+    );
+
+    tl.fromTo(
+      "#root",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.6, ease: "power2.out" },
+      0
+    );
+
+    window.__timelines["hero-scene"] = tl;
+  </script>
+</template>
