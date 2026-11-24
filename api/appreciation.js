@@ -2,6 +2,7 @@ import { getAppreciationCollection } from './_lib/mongodb.js';
 
 const DOC_ID = 'global';
 const SAFE_PROJECT_ID = /^[a-z0-9_-]{1,64}$/i;
+const SAFE_VIEW_KEY = /^(live|capture)$/;
 
 const nonNegInt = (value) => Math.max(0, Math.floor(Number(value) || 0));
 const clampRating = (value) => {
@@ -18,11 +19,22 @@ function serializeDoc(doc) {
     if (count > 0) projectLikes[id] = count;
   }
 
+  const rawViewClicks =
+    doc && doc.projectViewClicks && typeof doc.projectViewClicks === 'object'
+      ? doc.projectViewClicks
+      : {};
+  const projectViewClicks = {};
+  for (const [key, val] of Object.entries(rawViewClicks)) {
+    const count = nonNegInt(val);
+    if (count > 0) projectViewClicks[key] = count;
+  }
+
   return {
     portfolioLikes: nonNegInt(doc?.portfolioLikes),
     ratingSum: nonNegInt(doc?.ratingSum),
     ratingsCount: nonNegInt(doc?.ratingsCount),
     projectLikes,
+    projectViewClicks,
   };
 }
 
@@ -122,6 +134,7 @@ export default async function handler(req, res) {
               ratingSum: { $ifNull: ['$ratingSum', 0] },
               ratingsCount: { $ifNull: ['$ratingsCount', 0] },
               projectLikes: { $ifNull: ['$projectLikes', {}] },
+              projectViewClicks: { $ifNull: ['$projectViewClicks', {}] },
               updatedAt: now,
             },
           },
@@ -153,6 +166,7 @@ export default async function handler(req, res) {
                 $max: [0, { $add: [{ $ifNull: ['$ratingsCount', 0] }, countDelta] }],
               },
               projectLikes: { $ifNull: ['$projectLikes', {}] },
+              projectViewClicks: { $ifNull: ['$projectViewClicks', {}] },
               updatedAt: now,
             },
           },
@@ -185,6 +199,45 @@ export default async function handler(req, res) {
                   {
                     [projectId]: {
                       $max: [0, { $add: [{ $ifNull: [fieldPath, 0] }, delta] }],
+                    },
+                  },
+                ],
+              },
+              projectViewClicks: { $ifNull: ['$projectViewClicks', {}] },
+              updatedAt: now,
+            },
+          },
+        ],
+        { upsert: true, returnDocument: 'after' }
+      );
+
+      return res.status(200).json(serializeDoc(result));
+    }
+
+    if (type === 'project-view-click') {
+      const projectId = String(body.projectId || '').trim();
+      const view = String(body.view || '').trim();
+      if (!SAFE_PROJECT_ID.test(projectId) || !SAFE_VIEW_KEY.test(view)) {
+        return res.status(400).json({ error: 'Invalid projectId or view' });
+      }
+      const viewKey = `${projectId}__${view}`;
+      const fieldPath = `$projectViewClicks.${viewKey}`;
+
+      const result = await collection.findOneAndUpdate(
+        { _id: DOC_ID },
+        [
+          {
+            $set: {
+              portfolioLikes: { $ifNull: ['$portfolioLikes', 0] },
+              ratingSum: { $ifNull: ['$ratingSum', 0] },
+              ratingsCount: { $ifNull: ['$ratingsCount', 0] },
+              projectLikes: { $ifNull: ['$projectLikes', {}] },
+              projectViewClicks: {
+                $mergeObjects: [
+                  { $ifNull: ['$projectViewClicks', {}] },
+                  {
+                    [viewKey]: {
+                      $add: [{ $ifNull: [fieldPath, 0] }, 1],
                     },
                   },
                 ],

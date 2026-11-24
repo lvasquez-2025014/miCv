@@ -20,13 +20,16 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
 
   const [state, setState] = useState(() => normalizeAppreciationState(null));
   const [hydrated, setHydrated] = useState(false);
+  const [remoteLoaded, setRemoteLoaded] = useState(!endpoint);
   const stateRef = useRef(state);
   stateRef.current = state;
   const lastRemoteFetchRef = useRef(0);
+  const mutationSeqRef = useRef(0);
 
   const applyRemoteTotals = useCallback(
-    (remote) => {
-      if (!remote) return;
+    (remote, expectedSeq) => {
+      setRemoteLoaded(true);
+      if (!remote || expectedSeq !== mutationSeqRef.current) return;
       setState((prev) => {
         const remoteProjectLikes = remote.projectLikes || {};
         const syncedLikedProjects = {};
@@ -34,15 +37,23 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
           if ((remoteProjectLikes[id] || 0) > 0) syncedLikedProjects[id] = true;
         }
 
+        const remoteViewClicks = remote.projectViewClicks || {};
+        const syncedClickedViews = {};
+        for (const key of Object.keys(prev.clickedProjectViews || {})) {
+          if ((remoteViewClicks[key] || 0) > 0) syncedClickedViews[key] = true;
+        }
+
         const merged = normalizeAppreciationState({
           ...prev,
           portfolioLiked: remote.portfolioLikes > 0 ? prev.portfolioLiked : false,
           userRating: remote.ratingsCount > 0 ? prev.userRating : 0,
           likedProjects: syncedLikedProjects,
+          clickedProjectViews: syncedClickedViews,
           portfolioLikes: remote.portfolioLikes,
           ratingSum: remote.ratingSum,
           ratingsCount: remote.ratingsCount,
           projectLikes: remoteProjectLikes,
+          projectViewClicks: remoteViewClicks,
           mode: 'remote',
         });
         writeLocalAppreciation(merged, storageKey);
@@ -58,23 +69,32 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
     setState(local);
     setHydrated(true);
 
-    if (!endpoint) return undefined;
+    if (!endpoint) {
+      setRemoteLoaded(true);
+      return undefined;
+    }
 
     const controller = new AbortController();
+    const seqAtStart = mutationSeqRef.current;
     lastRemoteFetchRef.current = Date.now();
-    fetchRemoteAppreciation(endpoint, controller.signal).then(applyRemoteTotals);
+    fetchRemoteAppreciation(endpoint, controller.signal).then((remote) =>
+      applyRemoteTotals(remote, seqAtStart)
+    );
 
-    const onVisibility = () => {
-      if (document.visibilityState !== 'visible') return;
+    const refresh = () => {
+      if (document.visibilityState && document.visibilityState !== 'visible') return;
       if (Date.now() - lastRemoteFetchRef.current < 15000) return;
+      const seq = mutationSeqRef.current;
       lastRemoteFetchRef.current = Date.now();
-      fetchRemoteAppreciation(endpoint).then(applyRemoteTotals);
+      fetchRemoteAppreciation(endpoint).then((remote) => applyRemoteTotals(remote, seq));
     };
 
-    document.addEventListener('visibilitychange', onVisibility);
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
     return () => {
       controller.abort();
-      document.removeEventListener('visibilitychange', onVisibility);
+      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', refresh);
     };
   }, [storageKey, endpoint, applyRemoteTotals]);
 
@@ -99,6 +119,9 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
           ...(patch.ratingSum !== undefined ? { ratingSum: patch.ratingSum } : {}),
           ...(patch.ratingsCount !== undefined ? { ratingsCount: patch.ratingsCount } : {}),
           ...(patch.projectLikes !== undefined ? { projectLikes: patch.projectLikes } : {}),
+          ...(patch.projectViewClicks !== undefined
+            ? { projectViewClicks: patch.projectViewClicks }
+            : {}),
           mode: 'remote',
         });
         writeLocalAppreciation(next, storageKey);
@@ -109,6 +132,7 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
   );
 
   const togglePortfolioLike = useCallback(() => {
+    mutationSeqRef.current += 1;
     const prev = stateRef.current;
     const nextLiked = !prev.portfolioLiked;
     const delta = nextLiked ? 1 : -1;
@@ -138,6 +162,7 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
 
   const setPortfolioRating = useCallback(
     (stars) => {
+      mutationSeqRef.current += 1;
       const prev = stateRef.current;
       const clamped = Math.max(0, Math.min(5, Math.round(Number(stars) || 0)));
       // Si se vuelve a pulsar la misma estrella activa, permite retirar la calificación
@@ -182,6 +207,7 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
   const toggleProjectLike = useCallback(
     (projectId) => {
       if (!projectId) return false;
+      mutationSeqRef.current += 1;
       const prev = stateRef.current;
       const wasLiked = Boolean(prev.likedProjects[projectId]);
       const nextLiked = !wasLiked;
@@ -224,6 +250,45 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
     [storageKey, endpoint, soundEnabled, applyRemotePatch]
   );
 
+  const recordProjectViewClick = useCallback(
+    (projectId, view) => {
+      if (!projectId || (view !== 'live' && view !== 'capture')) return false;
+      const key = `${projectId}__${view}`;
+      const prev = stateRef.current;
+      if (prev.clickedProjectViews?.[key]) return false;
+
+      mutationSeqRef.current += 1;
+      const nextClickedViews = {
+        ...prev.clickedProjectViews,
+        [key]: true,
+      };
+      const nextViewClicks = {
+        ...prev.projectViewClicks,
+        [key]: (prev.projectViewClicks?.[key] || 0) + 1,
+      };
+
+      const next = normalizeAppreciationState({
+        ...prev,
+        clickedProjectViews: nextClickedViews,
+        projectViewClicks: nextViewClicks,
+      });
+
+      setState(next);
+      writeLocalAppreciation(next, storageKey);
+
+      if (endpoint) {
+        sendRemoteAppreciation(endpoint, {
+          type: 'project-view-click',
+          projectId,
+          view,
+        }).then(applyRemotePatch);
+      }
+
+      return true;
+    },
+    [storageKey, endpoint, applyRemotePatch]
+  );
+
   const averageRating = useMemo(() => {
     if (!state.ratingsCount) return 0;
     return Math.round((state.ratingSum / state.ratingsCount) * 10) / 10;
@@ -233,9 +298,11 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
     ...state,
     averageRating,
     hydrated,
+    remoteLoaded,
     togglePortfolioLike,
     setPortfolioRating,
     toggleProjectLike,
+    recordProjectViewClick,
   };
 }
 

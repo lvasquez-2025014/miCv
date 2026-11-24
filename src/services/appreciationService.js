@@ -17,6 +17,8 @@ export const EMPTY_APPRECIATION_STATE = Object.freeze({
   ratingsCount: 0,
   projectLikes: {},
   likedProjects: {},
+  projectViewClicks: {},
+  clickedProjectViews: {},
   mode: 'local',
 });
 
@@ -33,6 +35,8 @@ export function normalizeAppreciationState(raw) {
       ...EMPTY_APPRECIATION_STATE,
       projectLikes: {},
       likedProjects: {},
+      projectViewClicks: {},
+      clickedProjectViews: {},
     };
   }
 
@@ -40,6 +44,13 @@ export function normalizeAppreciationState(raw) {
   if (raw.likedProjects && typeof raw.likedProjects === 'object') {
     for (const [id, flag] of Object.entries(raw.likedProjects)) {
       if (flag) likedProjects[id] = true;
+    }
+  }
+
+  const clickedProjectViews = {};
+  if (raw.clickedProjectViews && typeof raw.clickedProjectViews === 'object') {
+    for (const [key, flag] of Object.entries(raw.clickedProjectViews)) {
+      if (flag) clickedProjectViews[key] = true;
     }
   }
 
@@ -55,6 +66,19 @@ export function normalizeAppreciationState(raw) {
   if (!isRemote) {
     for (const id of Object.keys(likedProjects)) {
       if (!projectLikes[id]) projectLikes[id] = 1;
+    }
+  }
+
+  const projectViewClicks = {};
+  if (raw.projectViewClicks && typeof raw.projectViewClicks === 'object') {
+    for (const [key, count] of Object.entries(raw.projectViewClicks)) {
+      const safe = nonNegInt(count);
+      if (safe > 0) projectViewClicks[key] = safe;
+    }
+  }
+  if (!isRemote) {
+    for (const key of Object.keys(clickedProjectViews)) {
+      if (!projectViewClicks[key]) projectViewClicks[key] = 1;
     }
   }
 
@@ -79,6 +103,8 @@ export function normalizeAppreciationState(raw) {
     ratingsCount,
     projectLikes,
     likedProjects,
+    projectViewClicks,
+    clickedProjectViews,
     mode: isRemote ? 'remote' : 'local',
   };
 }
@@ -126,6 +152,10 @@ export async function fetchRemoteAppreciation(endpoint, signal) {
       ratingsCount: nonNegInt(data.ratingsCount),
       projectLikes:
         data.projectLikes && typeof data.projectLikes === 'object' ? data.projectLikes : {},
+      projectViewClicks:
+        data.projectViewClicks && typeof data.projectViewClicks === 'object'
+          ? data.projectViewClicks
+          : {},
     };
   } catch {
     return null;
@@ -160,6 +190,10 @@ export async function sendRemoteAppreciation(endpoint, payload) {
       ratingsCount: data.ratingsCount !== undefined ? nonNegInt(data.ratingsCount) : undefined,
       projectLikes:
         data.projectLikes && typeof data.projectLikes === 'object' ? data.projectLikes : undefined,
+      projectViewClicks:
+        data.projectViewClicks && typeof data.projectViewClicks === 'object'
+          ? data.projectViewClicks
+          : undefined,
     };
   } catch {
     return null;

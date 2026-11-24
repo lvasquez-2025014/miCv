@@ -17,21 +17,21 @@ export const portfolio = {
 
   identity: {
     /** Reemplaza por tu nombre real o firma profesional. */
-    name: '[Tu Nombre]',
+    name: 'Ludwing',
     monogram: '',
     /** Opcional: pega aquí un SVG (<svg>...</svg>) o URL de tu propio logo para la animación inicial Glass Reveal. */
     introLogo: '',
-    role: 'Creative Developer · Frontend & IA',
-    sceneTag: 'BEYOND THE SYSTEM · 2026',
+    role: 'Portafolio · 2026',
+    sceneTag: '',
     statement: {
-      lead: 'Interfaces de vidrio,',
-      accent: 'código con precisión.',
+      lead: 'Dev Jr',
+      accent: 'en proceso.',
     },
     intro:
-      'Construyo experiencias web interactivas donde la ingeniería frontend, la dirección visual y la inteligencia artificial conviven en un mismo sistema.',
-    availability: '[Disponibilidad por definir]',
-    location: '[Ciudad / Remoto]',
-    isPlaceholder: true,
+      'Aprendiendo, construyendo proyectos reales y puliendo cada detalle paso a paso.',
+    availability: '',
+    location: '',
+    isPlaceholder: false,
   },
 
   /**
@@ -56,7 +56,7 @@ export const portfolio = {
         'Plataforma educativa diseñada para impulsar la comprensión lectora y el aprendizaje general en alumnos de cualquier nivel académico.',
       description:
         'Integra seguimiento continuo de progreso y tabla de posiciones (ranking) para mantener la motivación, además de un modo historia con más de 30 niveles repletos de lecturas variadas y desafíos interactivos.',
-      credits: 'Hecho por Ludwing, Estaban, Gahel',
+      credits: 'Este proyecto fue hecho por Ludwing, Estaban, Gahel',
       role: '',
       technologies: [],
       coverImage: '/projects/literatura-proyect.jpg',
@@ -84,176 +84,100 @@ export const portfolio = {
       isPlaceholder: false,
     },
     {
-      id: 'proyecto-02',
-      title: '[Proyecto 02 · Experiencia Web]',
+      id: 'oficial-auth',
+      title: 'Oficial Auth',
       year: '2026',
-      category: 'Frontend Creativo',
+      category: 'Auth & Licencias',
       summary:
-        'Espacio reservado para una interfaz interactiva con foco en diseño visual, movimiento y rendimiento.',
+        'Sistema administrador de aplicaciones con sistema de creación de usuarios y licencias, pensado especialmente para proyectos hechos en C++ con libcurl.',
       description:
-        'Explica brevemente el reto de diseño, la estructura de componentes y cómo lograste una experiencia fluida en escritorio y móvil.',
-      role: '[Tu rol en el proyecto]',
-      technologies: ['[Tecnología 1]', '[Tecnología 2]', '[Tecnología 3]'],
-      coverImage: '',
+        'Panel centralizado para administrar aplicaciones, generar y validar licencias y controlar el acceso de usuarios mediante API, listo para integrarse en proyectos desarrollados en C++ con libcurl.',
+      role: '',
+      technologies: ['C++', 'libcurl'],
+      coverImage: '/projects/oficial-auth.jpg',
+      embedUrl: '',
       gallery: [
         {
-          title: 'Escena principal',
-          caption: 'Reemplaza por una captura del proyecto publicado.',
-          image: '',
+          title: 'Oficial Auth',
+          caption: 'Pantalla de acceso — administrador de aplicaciones, usuarios y licencias.',
+          image: '/projects/oficial-auth.jpg',
           art: 'eclipseAsh',
-        },
-        {
-          title: 'Sistema de diseño',
-          caption: 'Componentes reutilizables y microinteracciones.',
-          image: '',
-          art: 'voidStorm',
         },
       ],
       repoUrl: '',
-      liveUrl: '',
+      liveUrl: 'https://api-frontend-navy.vercel.app/',
       art: 'eclipseAsh',
       seed: 23,
       tone: 'dark',
-      isPlaceholder: true,
+      isPlaceholder: false,
     },
     {
-      id: 'proyecto-03',
-      title: '[Proyecto 03 · Sistema / Herramienta]',
-      year: '2025',
-      category: 'Arquitectura Web',
+      id: 'alexshop',
+      title: 'AlexShop',
+      year: '2026',
+      status: 'En desarrollo',
+      category: 'Tienda Digital',
       summary:
-        'Espacio reservado para una herramienta, automatización o producto digital desarrollado por ti.',
+        'Esta aplicacion web esta pensada para realizar compras de diamantes para el juego ff donde se automatizan',
       description:
-        'Resume el objetivo práctico del sistema, las decisiones técnicas clave y lo que aprendiste durante su desarrollo.',
-      role: '[Tu rol en el proyecto]',
-      technologies: ['[Tecnología 1]', '[Tecnología 2]'],
-      coverImage: '',
+        'Actualmente esta en desarrollo aun faltan funciones UI/UX por definir, esta es una beta de como se llegaria a ver y a funcionar',
+      role: '',
+      technologies: [],
+      coverImage: '/projects/alexshop.jpg',
+      embedUrl: 'https://www.alexshop.pro',
       gallery: [
         {
-          title: 'Panel principal',
-          caption: 'Espacio para captura real de la aplicación.',
-          image: '',
+          title: 'Vista en vivo',
+          caption: 'Aplicación interactiva en tiempo real desde www.alexshop.pro.',
+          embedUrl: 'https://www.alexshop.pro',
+          image: '/projects/alexshop.jpg',
           art: 'overcast',
         },
         {
-          title: 'Estructura técnica',
-          caption: 'Vista de arquitectura o flujo de datos.',
-          image: '',
+          title: 'Captura principal',
+          caption: 'Pantalla de acceso de AlexShop — plataforma en desarrollo.',
+          image: '/projects/alexshop.jpg',
           art: 'eclipseAsh',
         },
       ],
       repoUrl: '',
-      liveUrl: '',
+      liveUrl: 'https://www.alexshop.pro',
       art: 'overcast',
       seed: 37,
       tone: 'dark',
-      isPlaceholder: true,
+      isPlaceholder: false,
     },
   ],
 
   /**
-   * Sección Sobre mí — Enfoque editorial y habilidades por confirmar.
+   * Sección Sobre mí — Pendiente de personalizar paso a paso.
    */
   about: {
-    headline: 'Construir software que se sienta como un espacio cuidado.',
-    bio: '[Completa aquí tu presentación personal en 2 o 3 frases claras: quién eres, qué te motiva a programar y qué tipo de experiencias disfrutas crear.]',
-    interests: [
-      {
-        title: 'Diseño de interfaces',
-        detail: 'Sistemas visuales coherentes, tipografía con carácter y tactilidad en cada transición.',
-      },
-      {
-        title: 'Ingeniería frontend',
-        detail: 'Arquitectura modular, accesibilidad real y rendimiento estable en cualquier pantalla.',
-      },
-      {
-        title: 'Inteligencia artificial',
-        detail: 'Integración de flujos generativos y asistentes útiles dentro de productos cotidianos.',
-      },
-    ],
-    skillGroups: [
-      {
-        category: 'Frontend e Interacción',
-        items: ['[Confirmar stack frontend, ej. React, Vite, CSS]'],
-      },
-      {
-        category: 'Inteligencia Artificial',
-        items: ['[Confirmar herramientas o APIs de IA que utilizas]'],
-      },
-      {
-        category: 'Flujo y Diseño',
-        items: ['[Confirmar herramientas de diseño, Git o backend]'],
-      },
-    ],
-    isPlaceholder: true,
+    headline: '',
+    bio: '',
+    interests: [],
+    skillGroups: [],
+    isPlaceholder: false,
   },
 
   /**
-   * Sección Experiencia y aprendizaje — Evolución sin inventar historial laboral.
+   * Sección Aprendizaje — Pendiente de personalizar paso a paso.
    */
   journey: {
-    heading: 'Evolución, práctica y aprendizaje continuo.',
-    subtitle:
-      'Sustituye cada capítulo por tus hitos reales: formación, proyectos clave, estudios o colaboraciones.',
-    entries: [
-      {
-        id: 'etapa-01',
-        period: '[Periodo / Etapa 01]',
-        kind: 'Fundamentos',
-        title: 'Bases de desarrollo web y pensamiento modular',
-        summary:
-          '[Describe tus primeros proyectos sólidos, cursos clave o el momento en que consolidaste tu base de desarrollo.]',
-        focus: ['HTML semántico', 'CSS moderno', 'JavaScript'],
-        isPlaceholder: true,
-      },
-      {
-        id: 'etapa-02',
-        period: '[Periodo / Etapa 02]',
-        kind: 'Especialización',
-        title: 'Interfaces interactivas, arquitectura de componentes y diseño',
-        summary:
-          '[Añade aquí cómo evolucionaste hacia aplicaciones React, sistemas de diseño, animaciones y experiencia de usuario.]',
-        focus: ['React', 'Arquitectura UI', 'Movimiento y accesibilidad'],
-        isPlaceholder: true,
-      },
-      {
-        id: 'etapa-03',
-        period: '[Periodo / Etapa 03]',
-        kind: 'Exploración actual',
-        title: 'Productos digitales impulsados por inteligencia artificial',
-        summary:
-          '[Detalla qué estás construyendo o investigando actualmente con IA, automatización o interfaces experimentales.]',
-        focus: ['Flujos con IA', 'Prototipado creativo', 'Sistemas web'],
-        isPlaceholder: true,
-      },
-    ],
+    heading: '',
+    subtitle: '',
+    entries: [],
   },
 
   /**
-   * Sección Contacto — Reemplaza por tu correo y perfiles reales.
+   * Sección Contacto — Pendiente de personalizar paso a paso.
    */
   contact: {
-    headline: 'Conversemos sobre tu próxima idea.',
-    note: 'Abierto a proyectos creativos, colaboraciones técnicas y nuevas oportunidades.',
-    email: '[tu-correo@dominio.com]',
-    socials: [
-      {
-        label: 'GitHub',
-        handle: '[github.com/tu-usuario]',
-        url: '',
-      },
-      {
-        label: 'LinkedIn',
-        handle: '[linkedin.com/in/tu-usuario]',
-        url: '',
-      },
-      {
-        label: 'X / Portfolio',
-        handle: '[enlace-opcional]',
-        url: '',
-      },
-    ],
-    isPlaceholder: true,
+    headline: '',
+    note: '',
+    email: '',
+    socials: [],
+    isPlaceholder: false,
   },
 
   /**

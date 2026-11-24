@@ -10,6 +10,20 @@ export function ContactSection({ contact, availability, perf }) {
 
   if (!contact) return null;
 
+  const hasContent = Boolean(
+    contact.headline || contact.note || contact.emailIsReal || contact.socials.length > 0
+  );
+
+  if (!hasContent) {
+    return (
+      <section
+        id="contacto"
+        className="section-shell section-shell--empty"
+        aria-label="Contacto"
+      />
+    );
+  }
+
   const handleCopy = async () => {
     if (!contact.emailIsReal) return;
     try {

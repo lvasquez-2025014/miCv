@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MotionConfig } from 'framer-motion';
-import { AppreciationBar } from './components/AppreciationBar';
 import { FloatingNav } from './components/FloatingNav';
 import { Footer } from './components/Footer';
 import { HyperframesHeroStage } from './components/HyperframesHeroStage';
@@ -23,6 +22,7 @@ export default function App() {
   const perf = usePerformanceProfile();
   const [introReady, setIntroReady] = useState(reducedMotion);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [requestedFolder, setRequestedFolder] = useState(null);
   const appreciation = useAppreciation(data.appreciation, { soundEnabled });
 
   const sectionIds = useMemo(
@@ -34,6 +34,14 @@ export default function App() {
 
   const handleIntroComplete = useCallback(() => {
     setIntroReady(true);
+  }, []);
+
+  const handleJumpToProject = useCallback((projectId) => {
+    setRequestedFolder({ id: projectId, ts: Date.now() });
+    const el = document.getElementById('proyectos');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }, []);
 
   useEffect(() => {
@@ -70,17 +78,18 @@ export default function App() {
 
       <HeroSection
         identity={data.identity}
-        projectCount={data.projects.length}
+        projects={data.projects}
         introReady={introReady}
         appreciation={appreciation}
         perf={perf}
+        onJumpToProject={handleJumpToProject}
       />
 
       <main id="contenido">
         <ProjectsSection
           projects={data.projects}
-          categories={data.projectCategories}
           appreciation={appreciation}
+          requestedFolder={requestedFolder}
         />
 
         <AboutSection about={data.about} perf={perf} />
@@ -91,11 +100,6 @@ export default function App() {
           contact={data.contact}
           availability={data.identity.availability}
           perf={perf}
-        />
-
-        <AppreciationBar
-          appreciation={appreciation}
-          config={data.appreciation}
         />
       </main>
 

@@ -7,7 +7,15 @@ import { LiquidSurface } from '../components/LiquidSurface';
 export function JourneySection({ journey }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  if (!journey || journey.entries.length === 0) return null;
+  if (!journey || journey.entries.length === 0) {
+    return (
+      <section
+        id="experiencia"
+        className="section-shell section-shell--empty"
+        aria-label="Aprendizaje"
+      />
+    );
+  }
 
   const activeEntry = journey.entries[activeIndex] || journey.entries[0];
 

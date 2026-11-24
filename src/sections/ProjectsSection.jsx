@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowUpRight, Star, X } from 'lucide-react';
 import { EDITORIAL_EASE, fadeUpVariants, viewportOnce } from '../animations/motion';
+import { LiquidSurface } from '../components/LiquidSurface';
+import { StarLikeButton } from '../components/StarLikeButton';
 import GlassFolder from '../components/glass-folder/GlassFolder';
 
 function ProjectFolderPedestal({
@@ -61,6 +64,7 @@ function ProjectFolderPedestal({
 
   const isDimmed = hasAnyOpen && !isOpen;
   const metaLabel = [
+    project.status,
     project.category,
     project.year,
     likeCount > 0 ? `★ ${likeCount}` : '',
@@ -100,8 +104,7 @@ function ProjectFolderPedestal({
   );
 }
 
-export function ProjectsSection({ projects, categories, appreciation }) {
-  const [activeCategory, setActiveCategory] = useState('Todos');
+export function ProjectsSection({ projects, appreciation, requestedFolder }) {
   const [openFolderId, setOpenFolderId] = useState(null);
   const [modalState, setModalState] = useState({ project: null, slide: 0 });
   const [ModalComponent, setModalComponent] = useState(null);
@@ -113,10 +116,22 @@ export function ProjectsSection({ projects, categories, appreciation }) {
     });
   };
 
-  const visibleProjects =
-    activeCategory === 'Todos'
-      ? projects
-      : projects.filter((project) => project.category === activeCategory);
+  useEffect(() => {
+    if (!requestedFolder?.id) return;
+    loadModal();
+    setOpenFolderId(requestedFolder.id);
+  }, [requestedFolder]);
+
+  const openProject = useMemo(
+    () => projects.find((project) => project.id === openFolderId) || null,
+    [projects, openFolderId]
+  );
+
+  const totalProjectStars = useMemo(() => {
+    const map = appreciation?.projectLikes;
+    if (!map) return 0;
+    return projects.reduce((sum, project) => sum + (Number(map[project.id]) || 0), 0);
+  }, [projects, appreciation?.projectLikes]);
 
   const handleToggleOpen = (nextId) => {
     if (nextId) loadModal();
@@ -131,53 +146,105 @@ export function ProjectsSection({ projects, categories, appreciation }) {
   const modalProjectId = modalState.project?.id;
 
   return (
-    <section id="proyectos" className="section-shell" aria-labelledby="proyectos-heading">
+    <section id="proyectos" className="section-shell section-shell--projects" aria-labelledby="proyectos-heading">
       <div className="container">
         <motion.div
-          className="section-header"
           variants={fadeUpVariants}
           initial="hidden"
           whileInView="visible"
           viewport={viewportOnce}
         >
-          <div className="section-eyebrow">
-            <span className="section-eyebrow__index">01</span>
-            <span>Proyectos</span>
-            <span className="section-eyebrow__jp" aria-hidden="true">作品</span>
-          </div>
+          <LiquidSurface dark className="projects-hud-bar">
+            <div className="projects-hud-bar__left">
+              <span className="projects-hud-bar__index">01</span>
+              <h2 id="proyectos-heading" className="projects-hud-bar__title">
+                Proyectos
+              </h2>
+              <span className="projects-hud-bar__count">
+                {String(projects.length).padStart(2, '0')}
+              </span>
+            </div>
 
-          <div>
-            <h2 id="proyectos-heading" className="section-heading">
-              Archivo interactivo en <em>vidrio líquido.</em>
-            </h2>
-            <p className="section-lead">
-              Abre cualquier carpeta y haz clic en su tarjeta para explorar la vista en vivo y toda
-              la información del proyecto.
-            </p>
-          </div>
+            <div className="projects-hud-bar__right">
+              <AnimatePresence mode="wait">
+                {openProject ? (
+                  <motion.div
+                    key={openProject.id}
+                    className="projects-hud-bar__active"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.24, ease: EDITORIAL_EASE }}
+                  >
+                    <span className="projects-hud-bar__selected">{openProject.title}</span>
+
+                    {openProject.status ? (
+                      <span className="project-status-pill">
+                        <span className="project-status-pill__dot" aria-hidden="true" />
+                        <span>{openProject.status}</span>
+                      </span>
+                    ) : null}
+
+                    {appreciation ? (
+                      <StarLikeButton
+                        icon="star"
+                        variant="hud"
+                        active={Boolean(appreciation.likedProjects?.[openProject.id])}
+                        count={appreciation.projectLikes?.[openProject.id] || 0}
+                        loading={!appreciation.remoteLoaded}
+                        onToggle={() => appreciation.toggleProjectLike(openProject.id)}
+                        label="Estrella"
+                        activeLabel="Con estrella"
+                      />
+                    ) : null}
+
+                    <button
+                      type="button"
+                      className="projects-hud-bar__open"
+                      onClick={() => handleInspect(openProject, 0)}
+                    >
+                      <span>Abrir vista</span>
+                      <ArrowUpRight size={14} />
+                    </button>
+
+                    <button
+                      type="button"
+                      className="projects-hud-bar__close"
+                      onClick={() => setOpenFolderId(null)}
+                      aria-label="Cerrar carpeta"
+                      title="Cerrar carpeta"
+                    >
+                      <X size={14} />
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="idle"
+                    className="projects-hud-bar__idle"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.24, ease: EDITORIAL_EASE }}
+                  >
+                    {totalProjectStars > 0 ? (
+                      <span className="projects-hud-bar__stars" title="Estrellas totales en proyectos">
+                        <Star size={12} fill="currentColor" aria-hidden="true" />
+                        <span>{totalProjectStars}</span>
+                      </span>
+                    ) : null}
+                    <span className="projects-hud-bar__hint">
+                      <span className="pulse-dot" aria-hidden="true" />
+                      <span>Haz clic en una carpeta para abrir</span>
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </LiquidSurface>
         </motion.div>
 
-        {categories.length > 1 ? (
-          <div className="filter-bar" role="group" aria-label="Filtrar proyectos por categoría">
-            {['Todos', ...categories].map((category) => (
-              <button
-                key={category}
-                type="button"
-                className={`filter-pill ${activeCategory === category ? 'filter-pill--active' : ''}`}
-                aria-pressed={activeCategory === category}
-                onClick={() => {
-                  setActiveCategory(category);
-                  setOpenFolderId(null);
-                }}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        ) : null}
-
         <div className="projects-gallery">
-          {visibleProjects.map((project, index) => (
+          {projects.map((project, index) => (
             <ProjectFolderPedestal
               key={project.id}
               project={project}
@@ -198,6 +265,10 @@ export function ProjectsSection({ projects, categories, appreciation }) {
           initialSlide={modalState.slide}
           isLiked={Boolean(modalProjectId && appreciation?.likedProjects?.[modalProjectId])}
           likeCount={modalProjectId ? appreciation?.projectLikes?.[modalProjectId] || 0 : 0}
+          viewClicks={appreciation?.projectViewClicks}
+          clickedViews={appreciation?.clickedProjectViews}
+          remoteLoaded={Boolean(appreciation?.remoteLoaded)}
+          onViewClick={appreciation?.recordProjectViewClick}
           onToggleLike={
             modalProjectId && appreciation
               ? () => appreciation.toggleProjectLike(modalProjectId)

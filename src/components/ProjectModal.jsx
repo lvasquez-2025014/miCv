@@ -11,6 +11,10 @@ export function ProjectModal({
   initialSlide = 0,
   isLiked = false,
   likeCount = 0,
+  viewClicks = {},
+  clickedViews = {},
+  remoteLoaded = true,
+  onViewClick,
   onToggleLike,
   onClose,
 }) {
@@ -57,6 +61,33 @@ export function ProjectModal({
 
   const activeSlide = slides[slideIdx] || slides[0];
   const isEmbedSlide = Boolean(activeSlide?.embedUrl);
+  const embedSlideIdx = slides.findIndex((slide) => Boolean(slide?.embedUrl));
+  const captureSlideIdx = slides.findIndex((slide) => !slide?.embedUrl);
+
+  const liveKey = project ? `${project.id}__live` : '';
+  const captureKey = project ? `${project.id}__capture` : '';
+  const liveClicks = liveKey ? viewClicks?.[liveKey] || 0 : 0;
+  const captureClicks = captureKey ? viewClicks?.[captureKey] || 0 : 0;
+  const liveClicked = Boolean(liveKey && clickedViews?.[liveKey]);
+  const captureClicked = Boolean(captureKey && clickedViews?.[captureKey]);
+
+  const handleLivePillClick = () => {
+    if (!project) return;
+    onViewClick?.(project.id, 'live');
+    if (embedSlideIdx >= 0) {
+      setSlideIdx(embedSlideIdx);
+    } else if (project.liveUrl) {
+      window.open(project.liveUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleCapturePillClick = () => {
+    if (!project) return;
+    onViewClick?.(project.id, 'capture');
+    if (captureSlideIdx >= 0) {
+      setSlideIdx(captureSlideIdx);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -86,6 +117,12 @@ export function ProjectModal({
                 <span className="section-eyebrow__index">{project.indexLabel}</span>
                 <span>{project.category}</span>
                 {project.year ? <span>· {project.year}</span> : null}
+                {project.status ? (
+                  <span className="project-status-pill">
+                    <span className="project-status-pill__dot" aria-hidden="true" />
+                    <span>{project.status}</span>
+                  </span>
+                ) : null}
                 {project.isPlaceholder ? (
                   <span className="placeholder-tag">Por completar</span>
                 ) : null}
@@ -127,32 +164,37 @@ export function ProjectModal({
                       className="project-modal__art"
                     />
                   )}
-
-                  {!isEmbedSlide && activeSlide?.caption ? (
-                    <div className="project-modal__caption">
-                      <strong>{activeSlide.title}</strong>
-                      <span>{activeSlide.caption}</span>
-                    </div>
-                  ) : null}
                 </div>
 
-                {slides.length > 1 ? (
-                  <div className="project-modal__thumbs" role="tablist" aria-label="Capturas del proyecto">
-                    {slides.map((slide, idx) => (
-                      <button
-                        key={`${slide.title}-${idx}`}
-                        type="button"
-                        role="tab"
-                        aria-selected={idx === slideIdx}
-                        className={`modal-thumb ${idx === slideIdx ? 'modal-thumb--active' : ''}`}
-                        onClick={() => setSlideIdx(idx)}
-                      >
-                        {slide.embedUrl ? <Globe size={13} /> : <Layers size={13} />}
-                        <span>{slide.title}</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
+                <div className="project-modal__thumbs" role="group" aria-label="Vistas y clics del proyecto">
+                  <button
+                    type="button"
+                    aria-pressed={embedSlideIdx >= 0 ? slideIdx === embedSlideIdx : liveClicked}
+                    aria-label={`${embedSlideIdx >= 0 ? 'Vista en vivo' : 'Abrir sitio en vivo'} · ${liveClicks} ${liveClicks === 1 ? 'persona' : 'personas'}`}
+                    title={embedSlideIdx >= 0 ? `Vista en vivo (${liveClicks})` : `Abrir sitio en vivo (${liveClicks})`}
+                    className={`modal-thumb${embedSlideIdx >= 0 && slideIdx === embedSlideIdx ? ' modal-thumb--active' : ''}${liveClicked ? ' modal-thumb--counted' : ''}`}
+                    onClick={handleLivePillClick}
+                  >
+                    <Globe size={14} aria-hidden="true" />
+                    <span className="modal-thumb__count">
+                      {!remoteLoaded && liveClicks === 0 ? '·' : liveClicks}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    aria-pressed={captureSlideIdx >= 0 ? slideIdx === captureSlideIdx : captureClicked}
+                    aria-label={`Captura principal · ${captureClicks} ${captureClicks === 1 ? 'persona' : 'personas'}`}
+                    title={`Captura principal (${captureClicks})`}
+                    className={`modal-thumb${captureSlideIdx >= 0 && slideIdx === captureSlideIdx ? ' modal-thumb--active' : ''}${captureClicked ? ' modal-thumb--counted' : ''}`}
+                    onClick={handleCapturePillClick}
+                  >
+                    <Layers size={14} aria-hidden="true" />
+                    <span className="modal-thumb__count">
+                      {!remoteLoaded && captureClicks === 0 ? '·' : captureClicks}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* Información técnica y enlaces */}
@@ -209,6 +251,7 @@ export function ProjectModal({
                       target="_blank"
                       rel="noreferrer noopener"
                       className="btn-primary"
+                      onClick={() => onViewClick?.(project.id, 'live')}
                     >
                       <span>Ver demostración</span>
                       <ArrowUpRight size={15} />

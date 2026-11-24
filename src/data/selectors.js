@@ -35,11 +35,18 @@ const normalizeStatement = (statement) => {
 
 function buildFolderFiles(project) {
   const firstShot = project.gallery[0];
+  const cardMeta = [
+    project.status,
+    project.embedUrl ? 'Vista en vivo' : !project.status ? project.year || 'Ver proyecto' : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return [
     {
       kind: 'preview',
       name: project.title,
-      meta: project.embedUrl ? 'Vista en vivo' : project.year || 'Ver proyecto',
+      meta: cardMeta,
       image: project.coverImage || firstShot?.image || undefined,
       art: !project.coverImage && !firstShot?.image ? firstShot?.art || project.art : undefined,
     },
@@ -69,6 +76,7 @@ function normalizeProjects(items) {
         indexLabel: String(idx + 1).padStart(2, '0'),
         title: clean(item.title),
         year: clean(item.year),
+        status: clean(item.status),
         category: clean(item.category) || 'Proyecto',
         summary: clean(item.summary),
         description: clean(item.description),
@@ -100,22 +108,8 @@ export function selectPortfolioViewModel(raw) {
   const idRaw = safe.identity || {};
 
   const name = clean(idRaw.name);
-  const cleanNameForMonogram = name.replace(/[\[\]]/g, '').trim();
-  const monogram =
-    clean(idRaw.monogram) ||
-    (!idRaw.isPlaceholder && cleanNameForMonogram
-      ? cleanNameForMonogram
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((w) => w[0]?.toUpperCase() || '')
-        .join('')
-      : '');
-
-  const rawStatement = normalizeStatement(idRaw.statement);
-  const statement =
-    rawStatement.lead || rawStatement.accent
-      ? rawStatement
-      : { lead: name || 'Portafolio creativo', accent: '' };
+  const monogram = clean(idRaw.monogram);
+  const statement = normalizeStatement(idRaw.statement);
 
   const identity = {
     name,
@@ -164,7 +158,7 @@ export function selectPortfolioViewModel(raw) {
 
   const journeyRaw = safe.journey || {};
   const journey = {
-    heading: clean(journeyRaw.heading) || 'Experiencia y aprendizaje',
+    heading: clean(journeyRaw.heading),
     subtitle: clean(journeyRaw.subtitle),
     entries: Array.isArray(journeyRaw.entries)
       ? journeyRaw.entries
@@ -185,7 +179,7 @@ export function selectPortfolioViewModel(raw) {
   const contactRaw = safe.contact || {};
   const rawEmail = clean(contactRaw.email);
   const contact = {
-    headline: clean(contactRaw.headline) || 'Contacto',
+    headline: clean(contactRaw.headline),
     note: clean(contactRaw.note),
     email: rawEmail,
     emailIsReal: isValidEmail(rawEmail),

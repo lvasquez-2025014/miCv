@@ -190,6 +190,7 @@ export function AppreciationBar({ appreciation, config }) {
                 variant="pill"
                 active={portfolioLiked}
                 count={portfolioLikes}
+                loading={!appreciation.remoteLoaded}
                 onToggle={togglePortfolioLike}
                 label="Me gustó"
                 activeLabel="Te gustó"

@@ -19,6 +19,7 @@ const SPARKS = [
 export function StarLikeButton({
   active = false,
   count = 0,
+  loading = false,
   onToggle,
   icon = 'star',
   label = 'Dar estrella',
@@ -113,7 +114,7 @@ export function StarLikeButton({
 
       {count > 0 || variant !== 'icon' ? (
         <span className="void-like-btn__count" aria-hidden="true">
-          {count}
+          {loading && count === 0 ? '·' : count}
         </span>
       ) : null}
     </motion.button>

@@ -50,6 +50,20 @@ export function AboutSection({ about, perf }) {
 
   if (!about) return null;
 
+  const hasContent = Boolean(
+    about.headline || about.bio || about.interests.length > 0 || about.skillGroups.length > 0
+  );
+
+  if (!hasContent) {
+    return (
+      <section
+        id="sobre-mi"
+        className="section-shell section-shell--empty"
+        aria-label="Sobre mí"
+      />
+    );
+  }
+
   const headlineWords = about.headline ? about.headline.split(/\s+/).filter(Boolean) : [];
 
   return (
