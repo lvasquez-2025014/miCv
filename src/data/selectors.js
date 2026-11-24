@@ -54,14 +54,14 @@ function normalizeProjects(items) {
     .map((item, idx) => {
       const gallery = Array.isArray(item.gallery)
         ? item.gallery
-            .filter((g) => g && typeof g === 'object')
-            .map((g, gIdx) => ({
-              title: clean(g.title) || `Vista ${gIdx + 1}`,
-              caption: clean(g.caption),
-              embedUrl: isValidUrl(g.embedUrl) ? clean(g.embedUrl) : '',
-              image: isValidUrl(g.image) ? clean(g.image) : '',
-              art: clean(g.art) || clean(item.art) || 'voidStorm',
-            }))
+          .filter((g) => g && typeof g === 'object')
+          .map((g, gIdx) => ({
+            title: clean(g.title) || `Vista ${gIdx + 1}`,
+            caption: clean(g.caption),
+            embedUrl: isValidUrl(g.embedUrl) ? clean(g.embedUrl) : '',
+            image: isValidUrl(g.image) ? clean(g.image) : '',
+            art: clean(g.art) || clean(item.art) || 'voidStorm',
+          }))
         : [];
 
       const project = {
@@ -105,10 +105,10 @@ export function selectPortfolioViewModel(raw) {
     clean(idRaw.monogram) ||
     (!idRaw.isPlaceholder && cleanNameForMonogram
       ? cleanNameForMonogram
-          .split(/\s+/)
-          .slice(0, 2)
-          .map((w) => w[0]?.toUpperCase() || '')
-          .join('')
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase() || '')
+        .join('')
       : '');
 
   const rawStatement = normalizeStatement(idRaw.statement);
@@ -141,23 +141,23 @@ export function selectPortfolioViewModel(raw) {
     bio: clean(aboutRaw.bio),
     interests: Array.isArray(aboutRaw.interests)
       ? aboutRaw.interests
-          .filter((i) => i && clean(i.title))
-          .map((i, idx) => ({
-            id: `interest-${idx + 1}`,
-            indexLabel: String(idx + 1).padStart(2, '0'),
-            title: clean(i.title),
-            detail: clean(i.detail),
-          }))
+        .filter((i) => i && clean(i.title))
+        .map((i, idx) => ({
+          id: `interest-${idx + 1}`,
+          indexLabel: String(idx + 1).padStart(2, '0'),
+          title: clean(i.title),
+          detail: clean(i.detail),
+        }))
       : [],
     skillGroups: Array.isArray(aboutRaw.skillGroups)
       ? aboutRaw.skillGroups
-          .filter((g) => g && clean(g.category) && Array.isArray(g.items))
-          .map((g, idx) => ({
-            id: `group-${idx + 1}`,
-            category: clean(g.category),
-            items: g.items.map(clean).filter(Boolean),
-          }))
-          .filter((g) => g.items.length > 0)
+        .filter((g) => g && clean(g.category) && Array.isArray(g.items))
+        .map((g, idx) => ({
+          id: `group-${idx + 1}`,
+          category: clean(g.category),
+          items: g.items.map(clean).filter(Boolean),
+        }))
+        .filter((g) => g.items.length > 0)
       : [],
     isPlaceholder: Boolean(aboutRaw.isPlaceholder),
   };
@@ -168,17 +168,17 @@ export function selectPortfolioViewModel(raw) {
     subtitle: clean(journeyRaw.subtitle),
     entries: Array.isArray(journeyRaw.entries)
       ? journeyRaw.entries
-          .filter((e) => e && clean(e.title))
-          .map((e, idx) => ({
-            id: clean(e.id) || `etapa-${idx + 1}`,
-            indexLabel: String(idx + 1).padStart(2, '0'),
-            period: clean(e.period),
-            kind: clean(e.kind),
-            title: clean(e.title),
-            summary: clean(e.summary),
-            focus: Array.isArray(e.focus) ? e.focus.map(clean).filter(Boolean) : [],
-            isPlaceholder: Boolean(e.isPlaceholder),
-          }))
+        .filter((e) => e && clean(e.title))
+        .map((e, idx) => ({
+          id: clean(e.id) || `etapa-${idx + 1}`,
+          indexLabel: String(idx + 1).padStart(2, '0'),
+          period: clean(e.period),
+          kind: clean(e.kind),
+          title: clean(e.title),
+          summary: clean(e.summary),
+          focus: Array.isArray(e.focus) ? e.focus.map(clean).filter(Boolean) : [],
+          isPlaceholder: Boolean(e.isPlaceholder),
+        }))
       : [],
   };
 
@@ -191,12 +191,12 @@ export function selectPortfolioViewModel(raw) {
     emailIsReal: isValidEmail(rawEmail),
     socials: Array.isArray(contactRaw.socials)
       ? contactRaw.socials
-          .filter((s) => s && clean(s.label))
-          .map((s) => ({
-            label: clean(s.label),
-            handle: clean(s.handle),
-            url: isValidUrl(s.url) ? clean(s.url) : '',
-          }))
+        .filter((s) => s && clean(s.label))
+        .map((s) => ({
+          label: clean(s.label),
+          handle: clean(s.handle),
+          url: isValidUrl(s.url) ? clean(s.url) : '',
+        }))
       : [],
     isPlaceholder: Boolean(contactRaw.isPlaceholder),
   };

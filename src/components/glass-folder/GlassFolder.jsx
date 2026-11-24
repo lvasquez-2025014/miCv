@@ -83,7 +83,14 @@ export default function GlassFolder({
 
   const k = width / W;
   const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
-  const density = Math.min(1.5, Math.max(1, dpr)) * k;
+  const perfTier =
+    typeof document !== 'undefined' ? document.documentElement.dataset.perf || 'high' : 'high';
+  const density =
+    perfTier === 'lite'
+      ? Math.max(0.55, 0.65 * k)
+      : perfTier === 'medium'
+        ? Math.max(0.7, 0.9 * k)
+        : Math.min(1.5, Math.max(1, dpr)) * k;
 
   // Ensamblaje al entrar en pantalla
   useEffect(() => {

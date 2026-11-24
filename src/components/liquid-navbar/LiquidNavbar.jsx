@@ -197,9 +197,13 @@ function initGL(canvas) {
   return { gl, u };
 }
 
-function supportsRefraction() {
-  if (typeof window === 'undefined' || typeof CSS === 'undefined') return false;
+function supportsRefraction(perfTier) {
+  if (perfTier !== 'high' || typeof window === 'undefined' || typeof CSS === 'undefined') {
+    return false;
+  }
   const ua = navigator.userAgent;
+  const isTouch = Boolean(window.matchMedia?.('(pointer: coarse)').matches);
+  if (isTouch) return false;
   return (
     /Chrome\/|Chromium\/|Edg\//.test(ua) &&
     !/Firefox\//.test(ua) &&
@@ -213,6 +217,7 @@ export function LiquidNavbar({
   active,
   onChange,
   tone = 'dark',
+  perfTier = 'high',
   compact,
   sound = false,
   ariaLabel = 'Navegación principal',
@@ -228,13 +233,15 @@ export function LiquidNavbar({
   const iconRefs = React.useRef([]);
   const audio = React.useRef(null);
   const st = React.useRef(makeState());
-  const [gl, setGl] = React.useState('on');
+  const [gl, setGl] = React.useState(perfTier === 'lite' ? 'off' : 'on');
   const [refract, setRefract] = React.useState(false);
   const [fx, setFx] = React.useState({ i: -1, n: 0 });
 
   const dark = tone === 'dark' ? 1 : 0;
   const darkRef = React.useRef(dark);
   darkRef.current = dark;
+  const tierRef = React.useRef(perfTier);
+  tierRef.current = perfTier;
 
   const draw = React.useCallback(() => {
     const s = st.current;
@@ -245,7 +252,7 @@ export function LiquidNavbar({
 
     if (s.glc) {
       const { gl: g, u } = s.glc;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, tierRef.current === 'high' ? 2 : 1);
       g.viewport(0, 0, g.drawingBufferWidth, g.drawingBufferHeight);
       g.uniform2f(u.uRes, s.w + PAD * 2, s.h + PAD * 2);
       g.uniform1f(u.uDpr, dpr);
@@ -281,7 +288,7 @@ export function LiquidNavbar({
       g.uniform4fv(u.uRip, rips);
       g.uniform3f(u.uMouse, s.mouse.x, s.mouse.y, s.mouse.s);
       g.uniform1f(u.uDark, darkRef.current);
-      g.uniform1f(u.uAmb, s.reduce ? 0 : 1);
+      g.uniform1f(u.uAmb, s.reduce || tierRef.current !== 'high' ? 0 : 1);
 
       g.clearColor(0, 0, 0, 0);
       g.clear(g.COLOR_BUFFER_BIT);
@@ -390,7 +397,8 @@ export function LiquidNavbar({
       step(dt, now);
       draw();
       const busy = s.moving || s.rips.length || s.sats.length || s.mouse.s > 0.01;
-      if (s.visible && (!s.reduce || busy)) {
+      const keepIdle = !s.reduce && tierRef.current === 'high';
+      if (s.visible && (keepIdle || busy)) {
         s.raf = requestAnimationFrame(tick);
       } else {
         s.raf = 0;
@@ -426,8 +434,8 @@ export function LiquidNavbar({
     T.x = nx;
 
     const cv = canvasRef.current;
-    if (cv) {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (cv && s.glc) {
+      const dpr = Math.min(window.devicePixelRatio || 1, tierRef.current === 'high' ? 2 : 1);
       const W = s.w + PAD * 2;
       const Hh = s.h + PAD * 2;
       if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(Hh * dpr)) {
@@ -441,13 +449,18 @@ export function LiquidNavbar({
   }, [current, loop]);
 
   React.useEffect(() => {
-    setRefract(supportsRefraction());
+    setRefract(supportsRefraction(perfTier));
     const s = st.current;
     s.reduce = Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 
     const cv = canvasRef.current;
-    s.glc = cv ? initGL(cv) : null;
-    if (!s.glc) setGl('off');
+    if (perfTier === 'lite') {
+      s.glc = null;
+      setGl('off');
+    } else {
+      s.glc = cv ? initGL(cv) : null;
+      setGl(s.glc ? 'on' : 'off');
+    }
 
     const lost = (e) => {
       e.preventDefault();
@@ -475,7 +488,7 @@ export function LiquidNavbar({
       cancelAnimationFrame(s.raf);
       s.raf = 0;
     };
-  }, [loop]);
+  }, [loop, perfTier]);
 
   useIsomorphicLayoutEffect(() => {
     measure();
@@ -608,32 +621,34 @@ export function LiquidNavbar({
       }}
       style={style}
     >
-      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
-        <filter
-          id="nimbus-refract"
-          x="0"
-          y="0"
-          width="100%"
-          height="100%"
-          colorInterpolationFilters="sRGB"
-        >
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.006 0.02"
-            numOctaves="2"
-            seed="7"
-            result="noise"
-          />
-          <feGaussianBlur in="noise" stdDeviation="2" result="soft" />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="soft"
-            scale="60"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-      </svg>
+      {refract ? (
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+          <filter
+            id="nimbus-refract"
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.006 0.02"
+              numOctaves="2"
+              seed="7"
+              result="noise"
+            />
+            <feGaussianBlur in="noise" stdDeviation="2" result="soft" />
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="soft"
+              scale="60"
+              xChannelSelector="R"
+              yChannelSelector="G"
+            />
+          </filter>
+        </svg>
+      ) : null}
 
       <span className="nimbus-glass" aria-hidden="true" />
       <canvas className="nimbus-water" ref={canvasRef} aria-hidden="true" />

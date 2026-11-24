@@ -10,7 +10,7 @@ const SECTION_VISUALS = {
   contacto: { icon: NimbusIcons.plane, fx: 'plane' },
 };
 
-export function FloatingNav({ sections, activeSection, sound = false }) {
+export function FloatingNav({ sections, activeSection, sound = false, perf }) {
   const [lockedIndex, setLockedIndex] = useState(null);
   const lockTimerRef = useRef(0);
 
@@ -68,16 +68,19 @@ export function FloatingNav({ sections, activeSection, sound = false }) {
             active={activeIndex}
             onChange={handleSelect}
             tone="dark"
+            perfTier={perf?.tier || 'high'}
             sound={sound}
             ariaLabel="Navegación principal"
           />
         </div>
       </div>
 
-      {/* Riel lateral discreto de progreso de lectura */}
-      <div className="scroll-rail" aria-hidden="true">
-        <motion.div className="scroll-rail__fill" style={{ scaleY: smoothProgress }} />
-      </div>
+      {/* Riel lateral discreto de progreso de lectura (solo escritorio) */}
+      {!perf?.isMobileTier ? (
+        <div className="scroll-rail" aria-hidden="true">
+          <motion.div className="scroll-rail__fill" style={{ scaleY: smoothProgress }} />
+        </div>
+      ) : null}
     </>
   );
 }

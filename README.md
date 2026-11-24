@@ -38,3 +38,4 @@ El proyecto ya incluye `vercel.json` listo para importar directamente desde GitH
 2. Vercel detectará automáticamente **Vite** y aplicará `vercel.json` (`pnpm install --frozen-lockfile`, `pnpm run build`, salida en `dist`).
 3. En **Settings → Environment Variables**, agrega `ENABLE_EXPERIMENTAL_COREPACK=1` para garantizar que Vercel utilice exactamente `pnpm@12.9.1` definido en `package.json`.
 4. Pulsa **Deploy**.
+

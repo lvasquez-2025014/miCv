@@ -23,12 +23,11 @@ function parseObjectPosition(value) {
   return [parseAxis(parts[0], 0.5), parseAxis(parts[1], 0.24)];
 }
 
-function projectImagePoint(u, v, imgEl, containerRect, canvasW, canvasH) {
-  const rect = imgEl.getBoundingClientRect();
-  const [posX, posY] = parseObjectPosition(getComputedStyle(imgEl).objectPosition);
+function projectImagePoint(u, v, imgRect, objPos, containerRect, canvasW, canvasH) {
+  const [posX, posY] = objPos;
 
-  const boxW = rect.width;
-  const boxH = rect.height;
+  const boxW = imgRect.width;
+  const boxH = imgRect.height;
   const imgRatio = IMG_W / IMG_H;
   const boxRatio = boxW / Math.max(1, boxH);
 
@@ -49,33 +48,34 @@ function projectImagePoint(u, v, imgEl, containerRect, canvasW, canvasH) {
   const invY = canvasH / Math.max(1, containerRect.height);
 
   return {
-    x: (rect.left - containerRect.left + offsetX + u * drawnW) * invX,
-    y: (rect.top - containerRect.top + offsetY + v * drawnH) * invY,
+    x: (imgRect.left - containerRect.left + offsetX + u * drawnW) * invX,
+    y: (imgRect.top - containerRect.top + offsetY + v * drawnH) * invY,
     scale: (drawnW * invX) / 1376,
   };
 }
 
 /**
- * Escena Hero HyperFrames (The Void — 4K UHD) + motor volumétrico HD en Canvas:
- * - Silueta Vantablack levitando con respiración/flotación GSAP y paralaje 3D al cursor.
- * - Brillo sutil y destello frío fijado exactamente a los dos puntos blancos de sus ojos.
- * - Volutas oscuras de humo de vacío desprendiéndose del borde de la capa.
- * - Rayos volumétricos de tormenta, relámpagos orgánicos, neblina y brasas con bokeh.
+ * Escena Hero HyperFrames (The Void — 4K UHD / HD móvil adaptativo) + motor volumétrico en Canvas:
+ * - Adapta automáticamente resolución, DPR, partículas y FPS según la gama del dispositivo.
+ * - Mantiene la silueta de The Void, sus dos ojos blancos y la atmósfera de tormenta fluidos a 60fps.
  */
-export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
+export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf }) {
   const rootRef = useRef(null);
   const rigRef = useRef(null);
   const imgRef = useRef(null);
   const canvasRef = useRef(null);
   const reducedMotion = useReducedMotionPreference();
+  const tier = perf?.tier || 'high';
+  const isLite = tier === 'lite';
+  const isMobile = tier !== 'high';
 
-  // Levitación cinematográfica + zoom GSAP + paralaje suave al cursor
+  // Levitación cinematográfica + zoom GSAP (desactivado en modo lite para scroll nativo puro)
   useEffect(() => {
     const root = rootRef.current;
     const rig = rigRef.current;
     if (!root || !rig) return undefined;
 
-    if (reducedMotion) {
+    if (reducedMotion || isLite) {
       gsap.set(root, { opacity: 1 });
       gsap.set(rig, { scale: 1.02, x: 0, y: 0 });
       return undefined;
@@ -88,16 +88,32 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
         rig,
         { scale: 1.02, x: 0, y: 4 },
         {
-          scale: 1.095,
-          x: 8,
-          y: -9,
-          duration: 8.2,
+          scale: isMobile ? 1.055 : 1.095,
+          x: isMobile ? 4 : 8,
+          y: isMobile ? -5 : -9,
+          duration: isMobile ? 10 : 8.2,
           repeat: -1,
           yoyo: true,
           ease: 'sine.inOut',
         }
       );
     }, root);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const inView = entry?.isIntersecting ?? true;
+        gsap.getTweensOf(rig).forEach((tw) => (inView ? tw.resume() : tw.pause()));
+      },
+      { threshold: 0.02 }
+    );
+    observer.observe(root);
+
+    if (isMobile) {
+      return () => {
+        observer.disconnect();
+        ctx.revert();
+      };
+    }
 
     const quickX = gsap.quickTo('.hf-camera-parallax', 'x', { duration: 1.0, ease: 'power3.out' });
     const quickY = gsap.quickTo('.hf-camera-parallax', 'y', { duration: 1.0, ease: 'power3.out' });
@@ -115,15 +131,6 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
       quickY(0);
     };
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const inView = entry?.isIntersecting ?? true;
-        gsap.getTweensOf(rig).forEach((tw) => (inView ? tw.resume() : tw.pause()));
-      },
-      { threshold: 0.02 }
-    );
-
-    observer.observe(root);
     window.addEventListener('pointermove', onMove, { passive: true });
     document.addEventListener('mouseleave', onLeave);
 
@@ -133,9 +140,9 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
       document.removeEventListener('mouseleave', onLeave);
       ctx.revert();
     };
-  }, [reducedMotion, introReady]);
+  }, [reducedMotion, introReady, isLite, isMobile]);
 
-  // Motor Canvas HD: ojos blancos de The Void, humo oscuro de vacío, rayos y tormenta
+  // Motor Canvas adaptativo: ojos blancos de The Void, humo oscuro de vacío, rayos y tormenta
   useEffect(() => {
     const canvas = canvasRef.current;
     const root = rootRef.current;
@@ -144,10 +151,15 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return undefined;
 
+    const maxDpr = isLite ? 0.75 : isMobile ? 1 : 1.5;
+    const minFrameMs = isLite ? 50 : isMobile ? 33 : 16;
+
     let width = 0;
     let height = 0;
-    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
+    let cachedObjPos = [0.5, 0.24];
     let rafId = 0;
+    let lastDrawn = 0;
     let visible = true;
     let hidden = document.hidden;
 
@@ -157,8 +169,8 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
     let nextStormAt = 1.8;
     let stormStart = -10;
 
-    // 7 haces volumétricos difusos entre las nubes de tormenta
-    const rays = [
+    // Haces volumétricos ajustados por gama
+    const allRays = [
       { angle: -0.44, spread: 0.095, alpha: 0.085, speed: 0.32, phase: 0.2 },
       { angle: -0.25, spread: 0.12, alpha: 0.12, speed: 0.26, phase: 1.5 },
       { angle: -0.07, spread: 0.11, alpha: 0.14, speed: 0.3, phase: 2.8 },
@@ -167,22 +179,31 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
       { angle: 0.43, spread: 0.09, alpha: 0.08, speed: 0.28, phase: 0.9 },
       { angle: 0.58, spread: 0.08, alpha: 0.055, speed: 0.21, phase: 3.4 },
     ];
+    const rays = isLite ? [] : isMobile ? allRays.slice(1, 5) : allRays;
 
-    // Volutas oscuras de vacío que se desprenden del borde de la capa flotante
-    const voidSmoke = Array.from({ length: 16 }, (_, i) => ({
+    // Volutas oscuras de vacío (0 en gama baja, 6 en móvil estándar, 16 en escritorio)
+    const smokeCount = isLite ? 0 : isMobile ? 6 : 16;
+    const voidSmoke = Array.from({ length: smokeCount }, (_, i) => ({
       x: 0,
       y: 0,
       vx: 0,
       vy: 0,
       r: 18 + (i % 5) * 14,
-      life: (i / 16) * 3.2,
+      life: (i / Math.max(1, smokeCount)) * 3.2,
       maxLife: 2.8 + (i % 4) * 0.7,
       phase: i * 1.9,
     }));
 
-    // 36 cenizas y brasas en 3 planos de profundidad
-    const particles = Array.from({ length: 36 }, (_, i) => {
-      const plane = i < 14 ? 0 : i < 29 ? 1 : 2;
+    // Cenizas y brasas adaptativas (8 en lite, 14 en móvil, 36 en escritorio)
+    const particleCount = isLite ? 8 : isMobile ? 14 : 36;
+    const particles = Array.from({ length: particleCount }, (_, i) => {
+      const plane = isLite
+        ? i % 2
+        : i < Math.floor(particleCount * 0.4)
+          ? 0
+          : i < Math.floor(particleCount * 0.82)
+            ? 1
+            : 2;
       const s = (i + 5) * 1.6180339;
       return {
         plane,
@@ -213,18 +234,30 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
 
     const resize = () => {
       const rect = root.getBoundingClientRect();
+      const imgRect = img.getBoundingClientRect();
       width = Math.max(1, root.clientWidth || rect.width);
       height = Math.max(1, root.clientHeight || rect.height);
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
+      dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
+      cachedObjPos = parseObjectPosition(getComputedStyle(img).objectPosition);
+      canvas.width = Math.max(1, Math.floor(width * dpr));
+      canvas.height = Math.max(1, Math.floor(height * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const cape = projectImagePoint(CAPE_EDGE.u, CAPE_EDGE.v, img, rect, width, height);
-      voidSmoke.forEach((m, idx) => {
-        resetSmoke(m, cape, cape.scale);
-        m.life = (idx / voidSmoke.length) * m.maxLife;
-      });
+      if (voidSmoke.length > 0) {
+        const cape = projectImagePoint(
+          CAPE_EDGE.u,
+          CAPE_EDGE.v,
+          imgRect,
+          cachedObjPos,
+          rect,
+          width,
+          height
+        );
+        voidSmoke.forEach((m, idx) => {
+          resetSmoke(m, cape, cape.scale);
+          m.life = (idx / voidSmoke.length) * m.maxLife;
+        });
+      }
 
       if (reducedMotion) render(performance.now());
     };
@@ -245,22 +278,59 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
     };
 
     const render = (now) => {
-      const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
+      if (!reducedMotion && visible && !hidden && lastDrawn && now - lastDrawn < minFrameMs) {
+        rafId = requestAnimationFrame(render);
+        return;
+      }
+      lastDrawn = now;
+
+      const dt = Math.min(0.06, Math.max(0.001, (now - last) / 1000));
       last = now;
 
       ctx.clearRect(0, 0, width, height);
 
-      pointer.nx += (pointer.tx - pointer.nx) * 0.065;
-      pointer.ny += (pointer.ty - pointer.ny) * 0.065;
+      if (!isMobile) {
+        pointer.nx += (pointer.tx - pointer.nx) * 0.065;
+        pointer.ny += (pointer.ty - pointer.ny) * 0.065;
+      }
       manualFlash *= Math.pow(0.06, dt);
 
       const t = reducedMotion ? 1.0 : now * 0.001;
       const storm = Math.min(1.15, computeStormIntensity(t) + manualFlash);
 
+      // Una sola lectura de layout por frame (en vez de 3 lecturas + 3 getComputedStyle)
       const stageRect = root.getBoundingClientRect();
-      const leftEye = projectImagePoint(LEFT_EYE.u, LEFT_EYE.v, img, stageRect, width, height);
-      const rightEye = projectImagePoint(RIGHT_EYE.u, RIGHT_EYE.v, img, stageRect, width, height);
-      const cape = projectImagePoint(CAPE_EDGE.u, CAPE_EDGE.v, img, stageRect, width, height);
+      const imgRect = img.getBoundingClientRect();
+      const leftEye = projectImagePoint(
+        LEFT_EYE.u,
+        LEFT_EYE.v,
+        imgRect,
+        cachedObjPos,
+        stageRect,
+        width,
+        height
+      );
+      const rightEye = projectImagePoint(
+        RIGHT_EYE.u,
+        RIGHT_EYE.v,
+        imgRect,
+        cachedObjPos,
+        stageRect,
+        width,
+        height
+      );
+      const cape =
+        voidSmoke.length > 0
+          ? projectImagePoint(
+              CAPE_EDGE.u,
+              CAPE_EDGE.v,
+              imgRect,
+              cachedObjPos,
+              stageRect,
+              width,
+              height
+            )
+          : null;
       const sc = Math.max(0.55, leftEye.scale);
 
       const midEyeX = (leftEye.x + rightEye.x) * 0.5;
@@ -283,7 +353,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
           m.life += dt;
           m.x += (m.vx + Math.sin(t * 1.5 + m.phase) * 0.16) * (dt * 60);
           m.y += (m.vy + Math.cos(t * 1.2 + m.phase) * 0.1) * (dt * 60);
-          if (m.life >= m.maxLife) resetSmoke(m, cape, sc);
+          if (m.life >= m.maxLife && cape) resetSmoke(m, cape, sc);
         }
         const prog = m.life / m.maxLife;
         const alpha = Math.sin(prog * Math.PI) * 0.32;
@@ -302,58 +372,62 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
 
-      const flashAlpha = 0.06 + storm * 0.38;
-      const flashX = width * 0.5 + pointer.nx * 16;
-      const flashY = height * 0.16 + pointer.ny * 10;
-      const flashGrad = ctx.createRadialGradient(
-        flashX,
-        flashY,
-        10,
-        flashX,
-        flashY,
-        Math.max(width, height) * 0.6
-      );
-      flashGrad.addColorStop(0, `rgba(218, 236, 240, ${flashAlpha})`);
-      flashGrad.addColorStop(0.35, `rgba(148, 182, 192, ${flashAlpha * 0.45})`);
-      flashGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = flashGrad;
-      ctx.fillRect(0, 0, width, height);
+      const flashAlpha = 0.06 + storm * (isLite ? 0.24 : 0.38);
+      if (flashAlpha > 0.07) {
+        const flashX = width * 0.5 + pointer.nx * 16;
+        const flashY = height * 0.16 + pointer.ny * 10;
+        const flashGrad = ctx.createRadialGradient(
+          flashX,
+          flashY,
+          10,
+          flashX,
+          flashY,
+          Math.max(width, height) * 0.6
+        );
+        flashGrad.addColorStop(0, `rgba(218, 236, 240, ${flashAlpha})`);
+        flashGrad.addColorStop(0.35, `rgba(148, 182, 192, ${flashAlpha * 0.45})`);
+        flashGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = flashGrad;
+        ctx.fillRect(0, 0, width, height);
+      }
 
       // Rayos volumétricos suaves desde el cielo nublado
-      const originX = width * 0.51 + pointer.nx * 22;
-      const originY = -height * 0.14;
-      const rayLen = Math.hypot(width, height) * 1.12;
+      if (rays.length > 0) {
+        const originX = width * 0.51 + pointer.nx * 22;
+        const originY = -height * 0.14;
+        const rayLen = Math.hypot(width, height) * 1.12;
 
-      for (let i = 0; i < rays.length; i++) {
-        const r = rays[i];
-        const sway = Math.sin(t * r.speed + r.phase) * 0.05;
-        const aMid = Math.PI * 0.5 + r.angle + sway;
-        const halfSpread = r.spread * 0.5;
-        const pulse = 0.72 + 0.28 * Math.sin(t * (r.speed * 1.5) + r.phase);
-        const rayAlpha = r.alpha * pulse * (1 + storm * 0.65);
+        for (let i = 0; i < rays.length; i++) {
+          const r = rays[i];
+          const sway = Math.sin(t * r.speed + r.phase) * 0.05;
+          const aMid = Math.PI * 0.5 + r.angle + sway;
+          const halfSpread = r.spread * 0.5;
+          const pulse = 0.72 + 0.28 * Math.sin(t * (r.speed * 1.5) + r.phase);
+          const rayAlpha = r.alpha * pulse * (1 + storm * 0.65);
 
-        const x1 = originX + Math.cos(aMid - halfSpread) * rayLen;
-        const y1 = originY + Math.sin(aMid - halfSpread) * rayLen;
-        const x2 = originX + Math.cos(aMid + halfSpread) * rayLen;
-        const y2 = originY + Math.sin(aMid + halfSpread) * rayLen;
+          const x1 = originX + Math.cos(aMid - halfSpread) * rayLen;
+          const y1 = originY + Math.sin(aMid - halfSpread) * rayLen;
+          const x2 = originX + Math.cos(aMid + halfSpread) * rayLen;
+          const y2 = originY + Math.sin(aMid + halfSpread) * rayLen;
 
-        const g = ctx.createLinearGradient(
-          originX,
-          originY,
-          originX + Math.cos(aMid) * rayLen * 0.82,
-          originY + Math.sin(aMid) * rayLen * 0.82
-        );
-        g.addColorStop(0, `rgba(220, 234, 236, ${rayAlpha})`);
-        g.addColorStop(0.5, `rgba(186, 206, 210, ${rayAlpha * 0.36})`);
-        g.addColorStop(1, 'rgba(186, 206, 210, 0)');
+          const g = ctx.createLinearGradient(
+            originX,
+            originY,
+            originX + Math.cos(aMid) * rayLen * 0.82,
+            originY + Math.sin(aMid) * rayLen * 0.82
+          );
+          g.addColorStop(0, `rgba(220, 234, 236, ${rayAlpha})`);
+          g.addColorStop(0.5, `rgba(186, 206, 210, ${rayAlpha * 0.36})`);
+          g.addColorStop(1, 'rgba(186, 206, 210, 0)');
 
-        ctx.beginPath();
-        ctx.moveTo(originX, originY);
-        ctx.lineTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.closePath();
-        ctx.fillStyle = g;
-        ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(originX, originY);
+          ctx.lineTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.closePath();
+          ctx.fillStyle = g;
+          ctx.fill();
+        }
       }
 
       // 3. Los dos puntos blancos mínimos e inquietantes de los ojos de The Void
@@ -368,8 +442,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
         ctx.arc(eye.x, eye.y, bloomR, 0, Math.PI * 2);
         ctx.fill();
 
-        // Destello horizontal ultra fino y contenido al acercar el cursor
-        if (eyePresence > 0.52) {
+        if (!isLite && eyePresence > 0.52) {
           const fw = (14 + (eyePresence - 0.52) * 34) * sc;
           const fg = ctx.createLinearGradient(eye.x - fw, eye.y, eye.x + fw, eye.y);
           fg.addColorStop(0, 'rgba(255, 255, 255, 0)');
@@ -380,7 +453,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
         }
       }
 
-      // 4. Cenizas y brasas en 3 planos de profundidad
+      // 4. Cenizas y brasas
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         if (!reducedMotion) {
@@ -395,12 +468,20 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
           }
         }
 
-        const parallaxMul = p.plane === 0 ? 10 : p.plane === 1 ? 24 : 42;
+        const parallaxMul = isMobile ? 0 : p.plane === 0 ? 10 : p.plane === 1 ? 24 : 42;
         const px = p.x * width + pointer.nx * parallaxMul;
         const py = p.y * height + pointer.ny * (parallaxMul * 0.7);
         const twinkle = 0.52 + 0.48 * Math.sin(t * p.flicker + p.phase);
 
-        if (p.plane === 0) {
+        if (isLite) {
+          ctx.fillStyle =
+            p.plane === 1
+              ? `rgba(245, 220, 178, ${0.65 * twinkle})`
+              : `rgba(216, 232, 236, ${0.38 * twinkle})`;
+          ctx.beginPath();
+          ctx.arc(px, py, p.r * 1.35, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.plane === 0) {
           const rad = p.r * 3.0;
           const g = ctx.createRadialGradient(px, py, 0, px, py, rad);
           g.addColorStop(0, `rgba(216, 232, 236, ${0.42 * twinkle})`);
@@ -467,6 +548,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
       hidden = document.hidden;
       if (!hidden && visible && !reducedMotion) {
         last = performance.now();
+        lastDrawn = 0;
         cancelAnimationFrame(rafId);
         rafId = requestAnimationFrame(render);
       }
@@ -477,6 +559,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
         visible = entry?.isIntersecting ?? true;
         if (visible && !hidden && !reducedMotion) {
           last = performance.now();
+          lastDrawn = 0;
           cancelAnimationFrame(rafId);
           rafId = requestAnimationFrame(render);
         }
@@ -487,9 +570,11 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
     resize();
     observer.observe(root);
     window.addEventListener('resize', resize);
-    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    if (!isMobile) {
+      window.addEventListener('pointermove', onPointerMove, { passive: true });
+      document.addEventListener('mouseleave', onLeave);
+    }
     window.addEventListener('pointerdown', onPointerDown, { passive: true });
-    document.addEventListener('mouseleave', onLeave);
     document.addEventListener('visibilitychange', onVisibility);
 
     if (!reducedMotion) {
@@ -500,37 +585,42 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale }) {
       cancelAnimationFrame(rafId);
       observer.disconnect();
       window.removeEventListener('resize', resize);
-      window.removeEventListener('pointermove', onPointerMove);
+      if (!isMobile) {
+        window.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('mouseleave', onLeave);
+      }
       window.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('mouseleave', onLeave);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [reducedMotion]);
+  }, [reducedMotion, isLite, isMobile]);
 
   return (
     <motion.div
       ref={rootRef}
       className="hf-hero-stage"
       aria-hidden="true"
-      style={{ y: scrollY, scale: scrollScale }}
+      style={isLite ? undefined : { y: scrollY, scale: scrollScale }}
     >
       <div className="hf-camera-parallax">
         <div ref={rigRef} className="hf-camera-rig">
-          <img
-            ref={imgRef}
-            className="hf-bg-photo"
-            src="/hyperframes/hero-4k.jpg"
-            alt=""
-            width={3840}
-            height={2160}
-            decoding="async"
-            fetchPriority="high"
-            draggable={false}
-          />
+          <picture className="hf-bg-picture">
+            <source media="(max-width: 900px)" srcSet="/hyperframes/hero-mobile.jpg" />
+            <img
+              ref={imgRef}
+              className="hf-bg-photo"
+              src={isMobile ? '/hyperframes/hero-mobile.jpg' : '/hyperframes/hero-4k.jpg'}
+              alt=""
+              width={isMobile ? 1280 : 3840}
+              height={isMobile ? 720 : 2160}
+              decoding="async"
+              fetchPriority="high"
+              draggable={false}
+            />
+          </picture>
         </div>
       </div>
 
-      {/* Motor volumétrico HD fijado a los ojos blancos y humo de The Void */}
+      {/* Motor volumétrico adaptativo fijado a los ojos blancos y atmósfera de The Void */}
       <canvas ref={canvasRef} className="hf-vfx-canvas" />
 
       <div className="hf-vignette" />

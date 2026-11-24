@@ -8,12 +8,13 @@ import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference'
 
 gsap.registerPlugin(ScrollTrigger);
 
-export function AboutSection({ about }) {
+export function AboutSection({ about, perf }) {
   const statementRef = useRef(null);
   const reducedMotion = useReducedMotionPreference();
+  const skipScrub = reducedMotion || Boolean(perf?.isLite);
 
   useEffect(() => {
-    if (!about?.headline || reducedMotion || !statementRef.current) return undefined;
+    if (!about?.headline || skipScrub || !statementRef.current) return undefined;
 
     const words = statementRef.current.querySelectorAll('.scrub-word');
     if (!words.length) return undefined;
@@ -37,7 +38,7 @@ export function AboutSection({ about }) {
     }, statementRef);
 
     return () => ctx.revert();
-  }, [about?.headline, reducedMotion]);
+  }, [about?.headline, skipScrub]);
 
   if (!about) return null;
 
@@ -85,12 +86,16 @@ export function AboutSection({ about }) {
           <span className="anime-corner anime-corner--bl" aria-hidden="true" />
           <span className="anime-corner anime-corner--br" aria-hidden="true" />
 
-          <img
-            src="/anime/system-horizon.jpg"
-            alt="Escena arquitectónica minimalista en vidrio y niebla plata"
-            className="anime-scene-banner__img"
-            loading="lazy"
-          />
+          <picture className="anime-scene-banner__picture">
+            <source media="(max-width: 900px)" srcSet="/anime/system-horizon-mobile.jpg" />
+            <img
+              src={perf?.isMobileTier ? '/anime/system-horizon-mobile.jpg' : '/anime/system-horizon.jpg'}
+              alt="Escena arquitectónica minimalista en vidrio y niebla plata"
+              className="anime-scene-banner__img"
+              loading="lazy"
+              decoding="async"
+            />
+          </picture>
           <div className="anime-scene-banner__veil" aria-hidden="true" />
           <div className="anime-scene-banner__meta">
             <span className="anime-scene-banner__code">SCENE 02 // OBSERVATORY</span>

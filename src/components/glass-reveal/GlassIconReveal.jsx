@@ -837,7 +837,8 @@ function startEngine(wrap, live) {
     }
 
     if (dirty && logo && renderer && !lost) {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const cap = live.current.maxDpr || 2;
+      const dpr = Math.min(window.devicePixelRatio || 1, cap);
       const cw = canvas.clientWidth;
       const ch = canvas.clientHeight;
       const w = Math.max(1, Math.round(cw * dpr));
@@ -949,6 +950,7 @@ export function GlassIconReveal({
   loop = false,
   hold,
   speed = 1,
+  maxDpr = 2,
   time,
   tuning,
   label = 'Animación de apertura',
@@ -998,8 +1000,8 @@ export function GlassIconReveal({
     tuningKey,
   ]);
 
-  const live = React.useRef({ settings, loop, speed, time, onFinish });
-  live.current = { settings, loop, speed, time, onFinish };
+  const live = React.useRef({ settings, loop, speed, maxDpr, time, onFinish });
+  live.current = { settings, loop, speed, maxDpr, time, onFinish };
 
   React.useEffect(() => {
     const wrap = wrapRef.current;

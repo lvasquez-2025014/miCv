@@ -68,8 +68,7 @@
 .gf-tilt {
   position: absolute;
   inset: 0;
-  transform: perspective(1400px) rotateX(calc(var(--gf-py) * -3.2deg))
-    rotateY(calc(var(--gf-px) * 4.2deg));
+  transform: perspective(1400px) rotateX(calc(var(--gf-py) * -3.2deg)) rotateY(calc(var(--gf-px) * 4.2deg));
   transition: transform 0.9s var(--gf-ease);
 }
 
@@ -189,11 +188,8 @@ canvas.gf-art[data-ready] {
     0 0 0 0.5px rgba(0, 0, 0, 0.1),
     0 10px 26px -8px rgba(8, 12, 24, 0.3);
   transform-origin: 50% 100%;
-  transform: translate(
-      calc(var(--gf-jx) + var(--gf-slot) * var(--gf-spread)),
-      calc(var(--gf-lift) + var(--gf-depth) * var(--gf-stack) * -1)
-    )
-    rotate(calc(var(--gf-jr) + var(--gf-slot) * var(--gf-fan)));
+  transform: translate(calc(var(--gf-jx) + var(--gf-slot) * var(--gf-spread)),
+      calc(var(--gf-lift) + var(--gf-depth) * var(--gf-stack) * -1)) rotate(calc(var(--gf-jr) + var(--gf-slot) * var(--gf-fan)));
   transition:
     transform 0.75s var(--gf-spring) calc(var(--gf-depth) * 40ms),
     box-shadow 0.4s var(--gf-ease),
@@ -219,11 +215,8 @@ canvas.gf-art[data-ready] {
 
 .gf-root[data-open] .gf-sheet:hover,
 .gf-root[data-open] .gf-sheet:focus-visible {
-  transform: translate(
-      calc(var(--gf-jx) + var(--gf-slot) * var(--gf-spread)),
-      calc(var(--gf-lift) + var(--gf-depth) * var(--gf-stack) * -1 - 18px)
-    )
-    rotate(calc(var(--gf-slot) * var(--gf-fan) * 0.6));
+  transform: translate(calc(var(--gf-jx) + var(--gf-slot) * var(--gf-spread)),
+      calc(var(--gf-lift) + var(--gf-depth) * var(--gf-stack) * -1 - 18px)) rotate(calc(var(--gf-slot) * var(--gf-fan) * 0.6));
   box-shadow:
     inset 0 1px 0 rgba(244, 250, 249, 0.34),
     0 0 0 1px rgba(220, 236, 232, 0.42),
@@ -262,12 +255,10 @@ canvas.gf-sheet-art[data-ready] {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(
-    180deg,
-    rgba(5, 8, 10, 0.78) 0%,
-    rgba(5, 8, 10, 0.34) 30%,
-    rgba(5, 8, 10, 0) 56%
-  );
+  background: linear-gradient(180deg,
+      rgba(5, 8, 10, 0.78) 0%,
+      rgba(5, 8, 10, 0.34) 30%,
+      rgba(5, 8, 10, 0) 56%);
   box-shadow: inset 0 0 0 1px rgba(226, 240, 236, 0.22);
   pointer-events: none;
 }
@@ -357,13 +348,16 @@ canvas.gf-sheet-art[data-ready] {
     rotate: -9deg;
     opacity: 0;
   }
+
   35% {
     opacity: 1;
   }
+
   72% {
     translate: 0 10px;
     rotate: 1deg;
   }
+
   100% {
     translate: 0 0;
     rotate: 0deg;
@@ -397,12 +391,15 @@ canvas.gf-sheet-art[data-ready] {
   0% {
     scale: 1;
   }
+
   35% {
     scale: 1.018 0.975;
   }
+
   70% {
     scale: 0.996 1.006;
   }
+
   100% {
     scale: 1;
   }
@@ -411,31 +408,25 @@ canvas.gf-sheet-art[data-ready] {
 .gf-tint {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(232, 238, 237, 0.2) 0%,
-    rgba(224, 230, 229, 0.54) 44%,
-    rgba(218, 225, 224, 0.9) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(232, 238, 237, 0.2) 0%,
+      rgba(224, 230, 229, 0.54) 44%,
+      rgba(218, 225, 224, 0.9) 100%);
 }
 
 .gf-root[data-tone='dark'] .gf-tint {
-  background: linear-gradient(
-    180deg,
-    rgba(20, 28, 30, 0.28) 0%,
-    rgba(12, 18, 20, 0.66) 48%,
-    rgba(7, 10, 12, 0.94) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(20, 28, 30, 0.28) 0%,
+      rgba(12, 18, 20, 0.66) 48%,
+      rgba(7, 10, 12, 0.94) 100%);
 }
 
 .gf-spec {
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    260px 200px at calc(50% + var(--gf-px) * 46%) calc(30% + var(--gf-py) * 40%),
-    rgba(255, 255, 255, 0.52),
-    rgba(255, 255, 255, 0) 70%
-  );
+  background: radial-gradient(260px 200px at calc(50% + var(--gf-px) * 46%) calc(30% + var(--gf-py) * 40%),
+      rgba(255, 255, 255, 0.52),
+      rgba(255, 255, 255, 0) 70%);
   mix-blend-mode: soft-light;
   opacity: 0.9;
   transition: background-position 0.6s var(--gf-ease);
@@ -469,7 +460,7 @@ canvas.gf-sheet-art[data-ready] {
   cursor: pointer;
 }
 
-.gf-hit:focus-visible ~ .gf-label .gf-title {
+.gf-hit:focus-visible~.gf-label .gf-title {
   text-decoration: underline;
   text-decoration-thickness: 1.5px;
   text-underline-offset: 4px;
@@ -532,6 +523,7 @@ canvas.gf-sheet-art[data-ready] {
     translate: 0 7px;
     filter: blur(3px);
   }
+
   to {
     opacity: 1;
     translate: 0 0;
@@ -606,11 +598,9 @@ canvas.gf-sheet-art[data-ready] {
 
 .gf-root[data-tone='dark'] .gf-key--more {
   color: #edf3f2;
-  background: linear-gradient(
-    180deg,
-    rgba(220, 236, 232, 0.14) 0%,
-    rgba(160, 184, 180, 0.06) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(220, 236, 232, 0.14) 0%,
+      rgba(160, 184, 180, 0.06) 100%);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   box-shadow:
@@ -648,6 +638,7 @@ canvas.gf-sheet-art[data-ready] {
   from {
     rotate: -90deg;
   }
+
   to {
     rotate: 0deg;
   }
@@ -772,7 +763,49 @@ canvas.gf-sheet-art[data-ready] {
   transition-delay: 0s, 0.36s, 0.36s;
 }
 
+@media (max-width: 768px) {
+  .gf-front {
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    backdrop-filter: blur(10px) saturate(1.2);
+  }
+
+  .gf-menu {
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    backdrop-filter: blur(12px) saturate(1.2);
+  }
+}
+
+html[data-perf='lite'] .gf-front {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html[data-perf='lite'] .gf-root[data-tone='dark'] .gf-tint {
+  background: linear-gradient(
+    180deg,
+    rgba(22, 30, 33, 0.78) 0%,
+    rgba(13, 19, 21, 0.92) 48%,
+    rgba(7, 10, 12, 0.97) 100%
+  );
+}
+
+html[data-perf='lite'] .gf-shadow {
+  filter: blur(12px);
+}
+
+html[data-perf='lite'] canvas.gf-art,
+html[data-perf='lite'] canvas.gf-sheet-art {
+  filter: none;
+}
+
+html[data-perf='lite'] .gf-key--more,
+html[data-perf='lite'] .gf-menu {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
+
   .gf-root *,
   .gf-root *::before,
   .gf-root *::after {

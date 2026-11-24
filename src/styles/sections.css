@@ -28,33 +28,16 @@
   height: 100%;
 }
 
-.intro-skip-btn {
-  position: fixed;
-  right: clamp(1rem, 3vw, 2rem);
-  bottom: clamp(1rem, 3vw, 2rem);
-  z-index: 4;
-  padding: 0.5rem 1.05rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--glass-border-strong);
-  background: rgba(14, 20, 22, 0.72);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 10px 28px -12px rgba(0, 0, 0, 0.72);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  transition:
-    color 0.25s var(--ease-glass),
-    border-color 0.25s var(--ease-glass),
-    background-color 0.25s var(--ease-glass);
-}
-
-.intro-skip-btn:hover {
-  color: var(--ink);
-  border-color: rgba(235, 246, 244, 0.55);
-  background: rgba(24, 34, 36, 0.88);
+.intro-lite-emblem {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(
+    circle at 50% 48%,
+    rgba(30, 42, 44, 0.32),
+    var(--bg-deep) 64%
+  );
 }
 
 /* ==========================================================================
@@ -2301,4 +2284,38 @@
     width: 100%;
     justify-content: space-between;
   }
+}
+
+.hf-bg-picture,
+.anime-scene-banner__picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Alivio GPU específico en móviles de gama baja (data-perf="lite") */
+html[data-perf='lite'] .modal-backdrop {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgba(3, 5, 7, 0.88);
+}
+
+html[data-perf='lite'] .filter-pill,
+html[data-perf='lite'] .journey-tab,
+html[data-perf='lite'] .btn-storm-glass,
+html[data-perf='lite'] .hero__role-pill,
+html[data-perf='lite'] .project-modal__caption,
+html[data-perf='lite'] .live-frame__status {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-perf='lite'] .project-pedestal__aura {
+  display: none;
+}
+
+html[data-perf='lite'] .void-star-btn:hover,
+html[data-perf='lite'] .void-star-btn--filled,
+html[data-perf='lite'] .void-star-btn--selected {
+  filter: none;
 }

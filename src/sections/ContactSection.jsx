@@ -5,7 +5,7 @@ import { EDITORIAL_EASE, fadeUpVariants, viewportOnce } from '../animations/moti
 import { LiquidSurface } from '../components/LiquidSurface';
 import { Magnetic } from '../components/Magnetic';
 
-export function ContactSection({ contact, availability }) {
+export function ContactSection({ contact, availability, perf }) {
   const [copied, setCopied] = useState(false);
 
   if (!contact) return null;
@@ -33,11 +33,12 @@ export function ContactSection({ contact, availability }) {
         >
           <LiquidSurface dark className="contact-card contact-card--obsidian">
             <img
-              src="/anime/system-horizon.jpg"
+              src={perf?.isMobileTier ? '/anime/system-horizon-mobile.jpg' : '/anime/system-horizon.jpg'}
               alt=""
               aria-hidden="true"
               className="contact-card__scene"
               loading="lazy"
+              decoding="async"
             />
             <div className="contact-card__glow" aria-hidden="true" />
 

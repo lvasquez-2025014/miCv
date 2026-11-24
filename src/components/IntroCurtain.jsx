@@ -3,7 +3,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { EDITORIAL_EASE } from '../animations/motion';
 import { GlassReveal21st } from './glass-reveal/GlassIconReveal';
 
-export function IntroCurtain({ identity, reducedMotion, onComplete }) {
+export function IntroCurtain({ identity, reducedMotion, perf, onComplete }) {
+  const isLite = Boolean(perf?.isLite);
+  const isMobile = Boolean(perf?.isMobileTier);
   const [visible, setVisible] = useState(!reducedMotion);
   const doneRef = useRef(false);
   const exitTimerRef = useRef(0);
@@ -34,8 +36,8 @@ export function IntroCurtain({ identity, reducedMotion, onComplete }) {
 
     window.addEventListener('keydown', onKeyDown);
 
-    // Respaldo de seguridad por si el dispositivo pausa rAF
-    const failsafe = window.setTimeout(finish, 6000);
+    // En móviles gama baja, apertura ligera GPU-only sin compilar WebGL2 ni SDF 1024×1024
+    const failsafe = window.setTimeout(finish, isLite ? 680 : 6000);
 
     return () => {
       document.body.style.overflow = prevOverflow;
@@ -43,7 +45,7 @@ export function IntroCurtain({ identity, reducedMotion, onComplete }) {
       window.clearTimeout(failsafe);
       window.clearTimeout(exitTimerRef.current);
     };
-  }, [reducedMotion, visible, finish]);
+  }, [reducedMotion, visible, isLite, finish]);
 
   const handleRevealFinish = useCallback(() => {
     window.clearTimeout(exitTimerRef.current);
@@ -56,30 +58,52 @@ export function IntroCurtain({ identity, reducedMotion, onComplete }) {
         <motion.div
           className="intro-curtain"
           initial={{ opacity: 1 }}
-          exit={{
-            opacity: 0,
-            scale: 1.03,
-            filter: 'blur(12px)',
-            transition: { duration: 0.72, ease: EDITORIAL_EASE },
-          }}
+          exit={
+            isMobile
+              ? {
+                  opacity: 0,
+                  transition: { duration: 0.45, ease: EDITORIAL_EASE },
+                }
+              : {
+                  opacity: 0,
+                  scale: 1.03,
+                  filter: 'blur(12px)',
+                  transition: { duration: 0.72, ease: EDITORIAL_EASE },
+                }
+          }
         >
-          <GlassReveal21st
-            logo={identity.introLogo || undefined}
-            loop={false}
-            speed={1.2}
-            tileSize={280}
-            onFinish={handleRevealFinish}
-            className="intro-curtain__stage"
-            label={identity.isPlaceholder ? 'Animación de apertura' : identity.name}
-          />
-
-          <button
-            type="button"
-            className="intro-skip-btn"
-            onClick={finish}
-          >
-            Saltar
-          </button>
+          {isLite ? (
+            <motion.div
+              className="intro-lite-emblem"
+              initial={{ opacity: 0, scale: 0.88 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.45, ease: EDITORIAL_EASE }}
+              aria-hidden="true"
+            >
+              <svg width="56" height="56" viewBox="0 0 64 64" fill="none">
+                <path
+                  d="M32 6L54 32L32 58L10 32L32 6Z"
+                  fill="#020304"
+                  stroke="#C8DCD8"
+                  strokeOpacity="0.48"
+                  strokeWidth="1.5"
+                />
+                <circle cx="26" cy="31.5" r="2.1" fill="#F2F7F6" />
+                <circle cx="38" cy="31.5" r="2.1" fill="#F2F7F6" />
+              </svg>
+            </motion.div>
+          ) : (
+            <GlassReveal21st
+              logo={identity.introLogo || undefined}
+              loop={false}
+              speed={1.2}
+              tileSize={isMobile ? 220 : 280}
+              maxDpr={isMobile ? 1 : 2}
+              onFinish={handleRevealFinish}
+              className="intro-curtain__stage"
+              label={identity.isPlaceholder ? 'Animación de apertura' : identity.name}
+            />
+          )}
         </motion.div>
       ) : null}
     </AnimatePresence>

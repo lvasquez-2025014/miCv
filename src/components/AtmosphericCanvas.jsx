@@ -6,20 +6,28 @@ import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference'
  * velos de niebla salvia-pizarra, sombras de vacío, marcas de registro finas
  * y motas de ceniza plateada / brasa sutil con paralaje.
  */
-export function AtmosphericCanvas() {
+export function AtmosphericCanvas({ perf }) {
   const canvasRef = useRef(null);
   const reducedMotion = useReducedMotionPreference();
+  const tier = perf?.tier || 'high';
+  const disabled = tier === 'lite';
 
   useEffect(() => {
+    if (disabled) return undefined;
     const canvas = canvasRef.current;
     if (!canvas) return undefined;
     const ctx = canvas.getContext('2d');
     if (!ctx) return undefined;
 
+    const isMobile = tier !== 'high';
+    const maxDpr = isMobile ? 1 : 1.5;
+    const minFrameMs = isMobile ? 42 : 16;
+
     let width = 0;
     let height = 0;
-    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
     let rafId = 0;
+    let lastRender = 0;
     let hidden = document.hidden;
 
     const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
@@ -27,13 +35,20 @@ export function AtmosphericCanvas() {
     let motes = [];
 
     const seed = () => {
-      clouds = [
-        { xRatio: 0.18, yRatio: 0.24, rRatio: 0.48, alpha: 0.09, speed: 0.16 },
-        { xRatio: 0.82, yRatio: 0.46, rRatio: 0.54, alpha: 0.075, speed: -0.14 },
-        { xRatio: 0.48, yRatio: 0.82, rRatio: 0.52, alpha: 0.08, speed: 0.12 },
-      ];
+      clouds = isMobile
+        ? [
+            { xRatio: 0.24, yRatio: 0.26, rRatio: 0.5, alpha: 0.085, speed: 0.14 },
+            { xRatio: 0.78, yRatio: 0.72, rRatio: 0.52, alpha: 0.075, speed: -0.12 },
+          ]
+        : [
+            { xRatio: 0.18, yRatio: 0.24, rRatio: 0.48, alpha: 0.09, speed: 0.16 },
+            { xRatio: 0.82, yRatio: 0.46, rRatio: 0.54, alpha: 0.075, speed: -0.14 },
+            { xRatio: 0.48, yRatio: 0.82, rRatio: 0.52, alpha: 0.08, speed: 0.12 },
+          ];
 
-      const count = Math.min(24, Math.max(10, Math.floor(width / 82)));
+      const count = isMobile
+        ? Math.min(10, Math.max(6, Math.floor(width / 90)))
+        : Math.min(24, Math.max(10, Math.floor(width / 82)));
       motes = Array.from({ length: count }, (_, i) => {
         const s = (i + 3) * 1.913;
         return {
@@ -51,7 +66,7 @@ export function AtmosphericCanvas() {
     const resize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -60,6 +75,12 @@ export function AtmosphericCanvas() {
     };
 
     const render = (time) => {
+      if (!reducedMotion && !hidden && lastRender && time - lastRender < minFrameMs) {
+        rafId = requestAnimationFrame(render);
+        return;
+      }
+      lastRender = time;
+
       ctx.clearRect(0, 0, width, height);
 
       pointer.x += (pointer.tx - pointer.x) * 0.055;
@@ -82,23 +103,25 @@ export function AtmosphericCanvas() {
       }
 
       // Cruces finas de registro cinematográfico
-      ctx.strokeStyle = 'rgba(218, 232, 228, 0.08)';
-      ctx.lineWidth = 1;
-      const marks = [
-        [width * 0.06, height * 0.24],
-        [width * 0.94, height * 0.3],
-        [width * 0.08, height * 0.78],
-        [width * 0.92, height * 0.76],
-      ];
-      for (const [mx, my] of marks) {
-        const px = mx + pointer.x * 5;
-        const py = my + pointer.y * 5;
-        ctx.beginPath();
-        ctx.moveTo(px - 7, py);
-        ctx.lineTo(px + 7, py);
-        ctx.moveTo(px, py - 7);
-        ctx.lineTo(px, py + 7);
-        ctx.stroke();
+      if (!isMobile) {
+        ctx.strokeStyle = 'rgba(218, 232, 228, 0.08)';
+        ctx.lineWidth = 1;
+        const marks = [
+          [width * 0.06, height * 0.24],
+          [width * 0.94, height * 0.3],
+          [width * 0.08, height * 0.78],
+          [width * 0.92, height * 0.76],
+        ];
+        for (const [mx, my] of marks) {
+          const px = mx + pointer.x * 5;
+          const py = my + pointer.y * 5;
+          ctx.beginPath();
+          ctx.moveTo(px - 7, py);
+          ctx.lineTo(px + 7, py);
+          ctx.moveTo(px, py - 7);
+          ctx.lineTo(px, py + 7);
+          ctx.stroke();
+        }
       }
 
       // Cenizas de tormenta plateadas y escasas brasas cálidas
@@ -142,6 +165,7 @@ export function AtmosphericCanvas() {
     const onVisibility = () => {
       hidden = document.hidden;
       if (!hidden && !reducedMotion) {
+        lastRender = 0;
         cancelAnimationFrame(rafId);
         rafId = requestAnimationFrame(render);
       }
@@ -149,7 +173,9 @@ export function AtmosphericCanvas() {
 
     resize();
     window.addEventListener('resize', resize);
-    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    if (!isMobile) {
+      window.addEventListener('pointermove', onPointerMove, { passive: true });
+    }
     document.addEventListener('visibilitychange', onVisibility);
 
     if (!reducedMotion) {
@@ -159,10 +185,14 @@ export function AtmosphericCanvas() {
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener('resize', resize);
-      window.removeEventListener('pointermove', onPointerMove);
+      if (!isMobile) {
+        window.removeEventListener('pointermove', onPointerMove);
+      }
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [reducedMotion]);
+  }, [reducedMotion, tier, disabled]);
+
+  if (disabled) return null;
 
   return (
     <canvas

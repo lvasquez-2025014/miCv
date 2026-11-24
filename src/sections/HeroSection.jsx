@@ -8,19 +8,20 @@ import { Magnetic } from '../components/Magnetic';
 import { StarLikeButton } from '../components/StarLikeButton';
 import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference';
 
-export function HeroSection({ identity, projectCount, introReady, appreciation }) {
+export function HeroSection({ identity, projectCount, introReady, appreciation, perf }) {
   const sectionRef = useRef(null);
   const reducedMotion = useReducedMotionPreference();
+  const staticScroll = reducedMotion || Boolean(perf?.isLite);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ['start start', 'end start'],
   });
 
-  const textY = useTransform(scrollYProgress, [0, 1], [0, reducedMotion ? 0 : 68]);
-  const artY = useTransform(scrollYProgress, [0, 1], [0, reducedMotion ? 0 : 44]);
-  const artScale = useTransform(scrollYProgress, [0, 1], [1.0, reducedMotion ? 1.0 : 1.06]);
-  const fadeOut = useTransform(scrollYProgress, [0, 0.88], [1, reducedMotion ? 1 : 0.25]);
+  const textY = useTransform(scrollYProgress, [0, 1], [0, staticScroll ? 0 : 68]);
+  const artY = useTransform(scrollYProgress, [0, 1], [0, staticScroll ? 0 : 44]);
+  const artScale = useTransform(scrollYProgress, [0, 1], [1.0, staticScroll ? 1.0 : 1.06]);
+  const fadeOut = useTransform(scrollYProgress, [0, 0.88], [1, staticScroll ? 1 : 0.25]);
 
   const { lead, accent } = identity.statement;
   const animateState = introReady ? 'visible' : 'hidden';
@@ -32,6 +33,7 @@ export function HeroSection({ identity, projectCount, introReady, appreciation }
         introReady={introReady}
         scrollY={artY}
         scrollScale={artScale}
+        perf={perf}
       />
 
       {/* Sello vertical japonés */}
@@ -44,7 +46,7 @@ export function HeroSection({ identity, projectCount, introReady, appreciation }
       {/* Contenido editorial + cápsula Liquid Glass */}
       <motion.div
         className="container hero__stage"
-        style={{ y: textY, opacity: fadeOut }}
+        style={staticScroll ? undefined : { y: textY, opacity: fadeOut }}
       >
         <div className="hero__editorial">
           <motion.div

@@ -8,6 +8,7 @@ import { IntroCurtain } from './components/IntroCurtain';
 import { PrecisionCursor } from './components/PrecisionCursor';
 import { useActiveSection } from './hooks/useActiveSection';
 import { useAppreciation } from './hooks/useAppreciation';
+import { usePerformanceProfile } from './hooks/usePerformanceProfile';
 import { usePortfolio } from './hooks/usePortfolio';
 import { useReducedMotionPreference } from './hooks/useReducedMotionPreference';
 import { AboutSection } from './sections/AboutSection';
@@ -19,6 +20,7 @@ import { ProjectsSection } from './sections/ProjectsSection';
 export default function App() {
   const data = usePortfolio();
   const reducedMotion = useReducedMotionPreference();
+  const perf = usePerformanceProfile();
   const [introReady, setIntroReady] = useState(reducedMotion);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const appreciation = useAppreciation(data.appreciation, { soundEnabled });
@@ -48,13 +50,14 @@ export default function App() {
         Ir al contenido principal
       </a>
 
-      <AtmosphericCanvas />
-      <div className="grain-layer" aria-hidden="true" />
+      {!perf.isLite ? <AtmosphericCanvas perf={perf} /> : null}
+      {!perf.isLite ? <div className="grain-layer" aria-hidden="true" /> : null}
       <PrecisionCursor />
 
       <IntroCurtain
         identity={data.identity}
         reducedMotion={reducedMotion}
+        perf={perf}
         onComplete={handleIntroComplete}
       />
 
@@ -62,6 +65,7 @@ export default function App() {
         sections={data.sections}
         activeSection={activeSection}
         sound={soundEnabled}
+        perf={perf}
       />
 
       <HeroSection
@@ -69,6 +73,7 @@ export default function App() {
         projectCount={data.projects.length}
         introReady={introReady}
         appreciation={appreciation}
+        perf={perf}
       />
 
       <main id="contenido">
@@ -78,13 +83,14 @@ export default function App() {
           appreciation={appreciation}
         />
 
-        <AboutSection about={data.about} />
+        <AboutSection about={data.about} perf={perf} />
 
         <JourneySection journey={data.journey} />
 
         <ContactSection
           contact={data.contact}
           availability={data.identity.availability}
+          perf={perf}
         />
 
         <AppreciationBar

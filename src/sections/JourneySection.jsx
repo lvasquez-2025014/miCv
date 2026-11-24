@@ -85,10 +85,10 @@ export function JourneySection({ journey }) {
                 role="tabpanel"
                 aria-labelledby={`journey-tab-${activeEntry.id}`}
                 className="journey-stage__inner"
-                initial={{ opacity: 0, y: 14, filter: 'blur(6px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, y: -10, filter: 'blur(6px)' }}
-                transition={{ duration: 0.4, ease: EDITORIAL_EASE }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.34, ease: EDITORIAL_EASE }}
               >
                 <div className="panel-head">
                   <span className="journey-badge">

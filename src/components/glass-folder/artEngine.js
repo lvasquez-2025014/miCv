@@ -388,10 +388,14 @@ function pump() {
   pumping = true;
 
   const tick = () => {
-    const until = performance.now() + 7;
+    const perf =
+      typeof document !== 'undefined' ? document.documentElement.dataset.perf || 'high' : 'high';
+    const budgetMs = perf === 'high' ? 7 : 3.5;
+    const rowsPerStep = perf === 'high' ? 4 : 2;
+    const until = performance.now() + budgetMs;
     while (queue.length && performance.now() < until) {
       const head = queue[0];
-      if (head.job.step(4)) {
+      if (head.job.step(rowsPerStep)) {
         queue.shift();
         const canvas = document.createElement('canvas');
         canvas.width = head.job.width;
