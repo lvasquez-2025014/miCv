@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowDownRight, ArrowUpRight, FolderOpen, Star } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { EDITORIAL_EASE, lineMaskVariants } from '../animations/motion';
 import { LiquidSurface } from '../components/LiquidSurface';
 import { Magnetic } from '../components/Magnetic';
@@ -164,9 +164,9 @@ export function HeroSection({
           transition={{ duration: 0.68, delay: 0.31, ease: EDITORIAL_EASE }}
           aria-label="Áreas actuales de desarrollo"
         >
-          <span className="hero__focus-tag">Web Apps</span>
+          {/* <span className="hero__focus-tag">Web Apps</span>
           <span className="hero__focus-tag">APIs &amp; Auth</span>
-          <span className="hero__focus-tag">C++ / libcurl</span>
+          <span className="hero__focus-tag">C++ / libcurl</span> */}
         </motion.div>
 
         <motion.div

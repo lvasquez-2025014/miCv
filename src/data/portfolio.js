@@ -16,16 +16,16 @@ export const portfolio = {
   },
 
   identity: {
-    /** Reemplaza por tu nombre real o firma profesional. */
-    name: 'Ludwing X AI',
-    monogram: '',
-    /** Opcional: pega aquí un SVG (<svg>...</svg>) o URL de tu propio logo para la animación inicial Glass Reveal. */
-    introLogo: '',
-    role: 'Portafolio · 2026 (BETA)',
-    sceneTag: '',
+    // /** Reemplaza por tu nombre real o firma profesional. */
+    // name: 'Ludwing X AI',
+    // monogram: '',
+    // /** Opcional: pega aquí un SVG (<svg>...</svg>) o URL de tu propio logo para la animación inicial Glass Reveal. */
+    // introLogo: '',
+    // role: 'Portafolio · 2026 (BETA)',
+    // sceneTag: '',
     statement: {
-      lead: 'Dev.Jr',
-      accent: 'en proceso.',
+      lead: 'Dev . Jr',
+      accent: 'en proceso',
     },
     intro:
       'Aprendiendo, construyendo proyectos reales y puliendo cada detalle paso a paso.',
