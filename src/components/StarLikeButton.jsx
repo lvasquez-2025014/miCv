@@ -20,6 +20,7 @@ export function StarLikeButton({
   active = false,
   count = 0,
   loading = false,
+  showCount = true,
   onToggle,
   icon = 'star',
   label = 'Dar estrella',
@@ -112,7 +113,7 @@ export function StarLikeButton({
         <span className="void-like-btn__label">{displayLabel}</span>
       ) : null}
 
-      {count > 0 || variant !== 'icon' ? (
+      {showCount && (count > 0 || variant !== 'icon') ? (
         <span className="void-like-btn__count" aria-hidden="true">
           {loading && count === 0 ? '·' : count}
         </span>

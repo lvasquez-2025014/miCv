@@ -2235,12 +2235,12 @@
 /* ==========================================================================
    Sistema de Estrellas y Likes (The Void Storm · Smoked Liquid Glass)
    ========================================================================== */
-.hero-system-hud__rating-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding-top: 0.72rem;
-  border-top: 1px solid rgba(214, 230, 226, 0.12);
+.hero-system-hud--minimal {
+  padding: 0.9rem 1.05rem;
+  border-radius: 20px;
+  gap: 0.72rem;
+  background: rgba(9, 14, 16, 0.68);
+  border-color: rgba(214, 230, 226, 0.18);
 }
 
 .hero-system-hud__like-row {
@@ -2250,28 +2250,32 @@
   gap: 0.75rem;
 }
 
-.hero-system-hud__rating-meta {
-  min-width: 0;
+.hero-system-hud__likes-text {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.35;
 }
 
-.hero-system-hud__like-hint {
+.hero-system-hud__stars-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.hero-system-hud__score {
   font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(196, 212, 208, 0.72);
-}
-
-.hero-system-hud__like-hint strong {
-  color: var(--accent-ember);
+  font-size: 0.74rem;
   font-weight: 600;
+  color: var(--accent-ember);
+  flex-shrink: 0;
 }
 
 .void-stars--hud {
-  width: 100%;
+  flex: 1 1 auto;
   justify-content: space-between;
-  padding: 0.24rem 0.45rem;
-  background: rgba(8, 13, 15, 0.68);
+  padding: 0.22rem 0.4rem;
+  background: rgba(8, 13, 15, 0.62);
 }
 
 .void-star-btn--hud {
@@ -3196,8 +3200,309 @@
     font-size: 0.68rem;
   }
 
-  .hero-system-hud__like-hint {
+  .hero-system-hud__likes-text {
+    font-size: 0.68rem;
+  }
+
+  .hero-system-hud__stars-row {
+    gap: 0.35rem;
+  }
+
+  .hero-system-hud__score {
+    font-size: 0.62rem;
+  }
+
+  .void-like-btn--hud {
+    min-height: 28px;
+    padding: 0.22rem 0.52rem;
+    font-size: 0.66rem;
+    gap: 0.3rem;
+  }
+
+  .void-star-btn--hud {
+    width: 24px;
+    height: 24px;
+  }
+
+  .void-star-btn--hud svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .projects-hud-bar {
+    padding: 0.55rem 0.6rem;
+    border-radius: 14px;
+    margin-bottom: 0.9rem;
+  }
+
+  .projects-hud-bar__title {
+    font-size: 0.88rem;
+  }
+
+  .projects-hud-bar__hint {
     font-size: 0.54rem;
+  }
+
+  .project-pedestal__stage {
+    padding-top: 1.4rem;
+  }
+
+  .modal-backdrop {
+    padding: 0.3rem;
+  }
+
+  .project-modal {
+    max-height: calc(100dvh - 0.6rem);
+    padding: 0.6rem;
+    border-radius: 14px;
+  }
+
+  .project-modal__header {
+    top: -0.6rem;
+    margin: -0.6rem -0.6rem 0.7rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .project-modal__eyebrow {
+    font-size: 0.58rem;
+    gap: 0.35rem;
+  }
+
+  .modal-close-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .project-modal__title {
+    font-size: 1.05rem;
+  }
+
+  .project-modal__summary,
+  .project-modal__desc {
+    font-size: 0.76rem;
+    line-height: 1.48;
+  }
+
+  .modal-thumb {
+    min-height: 28px;
+    padding: 0.28rem 0.55rem;
+    font-size: 0.68rem;
+  }
+
+  .live-frame__bar {
+    height: 28px;
+    padding: 0 0.45rem;
+  }
+
+  .live-frame__host {
+    font-size: 0.56rem;
+  }
+}
+
+@media (max-height: 540px) and (max-width: 960px) {
+  .hero {
+    min-height: auto;
+    padding-top: 4.75rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .live-frame--native .live-frame__viewport {
+    min-height: 150px;
+    max-height: 48dvh;
+  }
+}
+
+@media (min-width: 1920px) {
+  .hero__stage {
+    width: min(1480px, calc(100% - var(--gutter) * 2));
+  }
+}
+
+/* ==========================================================================
+   Ultra-pequeño (Foldables 280px, Smartwatches 160px-240px), Landscape y 4K
+   ========================================================================== */
+@media (max-width: 340px) {
+  .nav-wrap {
+    padding-inline: 0.35rem;
+  }
+
+  .hero {
+    padding-top: clamp(4.75rem, 20svh, 9rem);
+    padding-bottom: 1.25rem;
+  }
+
+  .hero__signature {
+    gap: 0.7rem;
+  }
+
+  .hero__title {
+    font-size: clamp(1.85rem, 11vw, 2.45rem);
+  }
+
+  .hero__intro {
+    font-size: 0.84rem;
+    line-height: 1.52;
+  }
+
+  .hero__actions .magnetic-static {
+    flex: 1 1 100%;
+  }
+
+  .hero__actions .btn-cobalt,
+  .hero__actions .btn-storm-glass {
+    min-height: 40px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.8rem;
+  }
+
+  .hero-system-hud {
+    padding: 0.8rem 0.85rem;
+    border-radius: 18px;
+    gap: 0.65rem;
+  }
+
+  .hero-system-hud__row {
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .void-stars--hud {
+    padding: 0.2rem 0.25rem;
+  }
+
+  .void-star-btn--hud {
+    width: clamp(28px, 13vw, 34px);
+    height: clamp(28px, 13vw, 34px);
+  }
+
+  .projects-hud-bar {
+    padding: 0.7rem 0.75rem;
+    border-radius: 16px;
+  }
+
+  .projects-hud-bar__open {
+    padding: 0.35rem 0.72rem;
+    font-size: 0.72rem;
+  }
+
+  .project-modal {
+    padding: 0.8rem;
+    border-radius: 18px;
+  }
+
+  .project-modal__header {
+    top: -0.8rem;
+    margin: -0.8rem -0.8rem 0.85rem;
+    padding: 0.65rem 0.8rem;
+  }
+
+  .modal-close-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .site-footer__inner {
+    font-size: 0.68rem;
+  }
+
+  .site-footer__actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+}
+
+@media (max-width: 250px) {
+  .nav-wrap {
+    top: 0.35rem;
+    padding-inline: 0.25rem;
+  }
+
+  .hero {
+    min-height: 100svh;
+    padding-top: 3.1rem;
+    padding-bottom: 0.9rem;
+  }
+
+  .hero__stage {
+    gap: 0.85rem;
+  }
+
+  .hero__status-pill {
+    font-size: 0.54rem;
+    padding: 0.26rem 0.52rem;
+    gap: 0.38rem;
+    white-space: normal;
+  }
+
+  .hero__title {
+    font-size: clamp(1.38rem, 12vw, 1.85rem);
+    line-height: 0.98;
+  }
+
+  .hero__intro {
+    font-size: 0.74rem;
+    line-height: 1.45;
+  }
+
+  .hero__focus-tags {
+    gap: 0.3rem;
+  }
+
+  .hero__focus-tag {
+    font-size: 0.54rem;
+    padding: 0.22rem 0.48rem;
+  }
+
+  .hero__actions .btn-cobalt,
+  .hero__actions .btn-storm-glass {
+    min-height: 34px;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.72rem;
+    gap: 0.35rem;
+  }
+
+  .hero-system-hud {
+    padding: 0.65rem;
+    border-radius: 14px;
+    gap: 0.5rem;
+  }
+
+  .hero-system-hud__top {
+    padding-bottom: 0.42rem;
+  }
+
+  .hero-system-hud__tag {
+    font-size: 0.54rem;
+    letter-spacing: 0.08em;
+  }
+
+  .hero-system-hud__jp {
+    display: none;
+  }
+
+  .cinema-caption__label {
+    font-size: 0.54rem;
+  }
+
+  .cinema-caption__value {
+    font-size: 0.82rem;
+  }
+
+  .cinema-jump {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.68rem;
+  }
+
+  .hero-system-hud__likes-text {
+    font-size: 0.68rem;
+  }
+
+  .hero-system-hud__stars-row {
+    gap: 0.35rem;
+  }
+
+  .hero-system-hud__score {
+    font-size: 0.62rem;
   }
 
   .void-like-btn--hud {

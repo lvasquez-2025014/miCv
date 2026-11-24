@@ -66,8 +66,17 @@ export function HeroSection({
   const userRating = appreciation?.userRating || 0;
   const averageRating = appreciation?.averageRating || 0;
   const ratingsCount = appreciation?.ratingsCount || 0;
+  const portfolioLikes = appreciation?.portfolioLikes || 0;
+  const likesLoading = !appreciation?.remoteLoaded && portfolioLikes === 0;
   const visualStars = hoveredStar || userRating;
-  const activeDescriptor = visualStars ? RATING_LABELS[visualStars] : '';
+
+  const likesSummaryText = likesLoading
+    ? 'Cargando...'
+    : portfolioLikes === 0
+      ? 'Sé el primero en dar me gusta'
+      : portfolioLikes === 1
+        ? 'Le gustó a 1 persona más'
+        : `Le gustó a ${portfolioLikes} personas más`;
 
   const handleStarClick = (star) => {
     if (!appreciation?.setPortfolioRating) return;
@@ -235,71 +244,34 @@ export function HeroSection({
           </motion.div>
         ) : null}
 
-        {/* Cápsula flotante Liquid Glass sobre la escena HyperFrames */}
-        <motion.div
-          className="hero__hud-slot"
-          initial={{ opacity: 0, y: 20 }}
-          animate={introReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.8, delay: 0.38, ease: EDITORIAL_EASE }}
-        >
-          <LiquidSurface dark className="hero-system-hud hero-system-hud--storm">
-            <span className="anime-corner anime-corner--tl" aria-hidden="true" />
-            <span className="anime-corner anime-corner--tr" aria-hidden="true" />
-            <span className="anime-corner anime-corner--bl" aria-hidden="true" />
-            <span className="anime-corner anime-corner--br" aria-hidden="true" />
+        {/* Tarjeta minimalista de me gusta y valoración en Liquid Glass */}
+        {appreciation ? (
+          <motion.div
+            className="hero__hud-slot"
+            initial={{ opacity: 0, y: 20 }}
+            animate={introReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.8, delay: 0.38, ease: EDITORIAL_EASE }}
+          >
+            <LiquidSurface dark className="hero-system-hud hero-system-hud--minimal">
+              <div className="hero-system-hud__like-row">
+                <span className="hero-system-hud__likes-text" aria-live="polite">
+                  {likesSummaryText}
+                </span>
 
-            <div className="hero-system-hud__top">
-              <span className="hero-system-hud__tag">[ SYSTEM · ARCHIVE ]</span>
-              <span className="hero-system-hud__jp">作品目録</span>
-            </div>
-
-            <div className="hero-system-hud__row">
-              <div className="cinema-caption">
-                <span className="cinema-caption__label">Carpetas interactivas</span>
-                <strong className="cinema-caption__value">
-                  {String(projectCount).padStart(2, '0')}{' '}
-                  {projectCount === 1 ? 'proyecto' : 'proyectos'}
-                </strong>
+                <StarLikeButton
+                  icon="heart"
+                  variant="hud"
+                  showCount={false}
+                  active={appreciation.portfolioLiked}
+                  count={portfolioLikes}
+                  loading={!appreciation.remoteLoaded}
+                  onToggle={appreciation.togglePortfolioLike}
+                  label="Me gusta"
+                  activeLabel="Te gustó"
+                />
               </div>
 
-              <a href="#proyectos" className="cinema-jump cinema-jump--storm" aria-label="Abrir galería de proyectos">
-                <span>Abrir</span>
-                <ArrowUpRight size={14} />
-              </a>
-            </div>
-
-            {appreciation ? (
-              <div className="hero-system-hud__rating-block">
-                <div className="hero-system-hud__like-row">
-                  <div className="hero-system-hud__rating-meta" aria-live="polite">
-                    <span className="hero-system-hud__like-hint">
-                      {activeDescriptor ? (
-                        <>
-                          <strong>{visualStars}/5</strong> · {activeDescriptor}
-                        </>
-                      ) : ratingsCount > 0 ? (
-                        <>
-                          <strong>★ {averageRating.toFixed(1)}</strong> · {ratingsCount}{' '}
-                          {ratingsCount === 1 ? 'voto' : 'votos'}
-                        </>
-                      ) : (
-                        'Valorar portafolio'
-                      )}
-                    </span>
-                  </div>
-
-                  <StarLikeButton
-                    icon="heart"
-                    variant="hud"
-                    active={appreciation.portfolioLiked}
-                    count={appreciation.portfolioLikes}
-                    loading={!appreciation.remoteLoaded}
-                    onToggle={appreciation.togglePortfolioLike}
-                    label="Me gusta"
-                    activeLabel="Te gustó"
-                  />
-                </div>
-
+              <div className="hero-system-hud__stars-row">
                 <div
                   className="void-stars void-stars--hud"
                   role="radiogroup"
@@ -362,10 +334,16 @@ export function HeroSection({
                     );
                   })}
                 </div>
+
+                {ratingsCount > 0 ? (
+                  <span className="hero-system-hud__score" title={`${ratingsCount} valoraciones`}>
+                    {averageRating.toFixed(1)}
+                  </span>
+                ) : null}
               </div>
-            ) : null}
-          </LiquidSurface>
-        </motion.div>
+            </LiquidSurface>
+          </motion.div>
+        ) : null}
       </div>
     </>
   );
