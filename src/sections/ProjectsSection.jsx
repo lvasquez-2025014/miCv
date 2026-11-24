@@ -42,19 +42,19 @@ function ProjectFolderPedestal({
     },
     ...(project.liveUrl
       ? [
-          {
-            label: 'Abrir demostración ↗',
-            onSelect: () => window.open(project.liveUrl, '_blank', 'noopener,noreferrer'),
-          },
-        ]
+        {
+          label: 'Abrir demostración ↗',
+          onSelect: () => window.open(project.liveUrl, '_blank', 'noopener,noreferrer'),
+        },
+      ]
       : []),
     ...(project.repoUrl
       ? [
-          {
-            label: 'Abrir repositorio ↗',
-            onSelect: () => window.open(project.repoUrl, '_blank', 'noopener,noreferrer'),
-          },
-        ]
+        {
+          label: 'Abrir repositorio ↗',
+          onSelect: () => window.open(project.repoUrl, '_blank', 'noopener,noreferrer'),
+        },
+      ]
       : []),
   ];
 
@@ -158,7 +158,7 @@ export function ProjectsSection({ projects, appreciation, requestedFolder }) {
             <div className="projects-hud-bar__left">
               <span className="projects-hud-bar__index">01</span>
               <h2 id="proyectos-heading" className="projects-hud-bar__title">
-                Proyectos
+                Mis Proyectos
               </h2>
               <span className="projects-hud-bar__count">
                 {String(projects.length).padStart(2, '0')}
