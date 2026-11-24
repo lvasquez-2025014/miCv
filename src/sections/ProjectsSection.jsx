@@ -25,7 +25,7 @@ function ProjectFolderPedestal({
     const update = () => {
       const available = el.clientWidth;
       if (available > 0) {
-        setFolderWidth(Math.min(340, Math.max(236, Math.floor(available - 8))));
+        setFolderWidth(Math.min(340, Math.max(136, Math.floor(available - 6))));
       }
     };
 

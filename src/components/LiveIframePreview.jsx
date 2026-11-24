@@ -42,7 +42,7 @@ export function LiveIframePreview({
     const update = () => {
       const w = el.clientWidth;
       if (w > 0) {
-        setIsNarrow(!compact && window.innerWidth <= 520);
+        setIsNarrow(!compact && (window.innerWidth <= 560 || w < 380));
         setScale(w / DESKTOP_W);
       }
     };

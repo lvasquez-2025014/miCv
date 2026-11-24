@@ -17,6 +17,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color-scheme: dark;
+  overflow-x: clip;
 }
 
 body {
@@ -405,7 +406,7 @@ canvas {
     gap: 0.9rem;
   }
 
-  .section-shell {
+  .section-shell:not(.section-shell--projects):not(.section-shell--empty) {
     content-visibility: auto;
     contain-intrinsic-size: 1px 680px;
   }
@@ -441,6 +442,20 @@ canvas {
   }
 }
 
+@media (max-width: 340px) {
+  :root {
+    --gutter: 0.65rem;
+    --section-space: 2.5rem;
+  }
+}
+
+@media (max-width: 250px) {
+  :root {
+    --gutter: 0.45rem;
+    --section-space: 1.85rem;
+  }
+}
+
 /* Perfil ligero para dispositivos de gama muy baja: conserva Liquid Glass nítido con menor blur */
 html[data-perf='lite'] body {
   background-attachment: scroll;
@@ -450,7 +465,7 @@ html[data-perf='lite'] .grain-layer {
   display: none;
 }
 
-html[data-perf='lite'] .section-shell {
+html[data-perf='lite'] .section-shell:not(.section-shell--projects):not(.section-shell--empty) {
   content-visibility: auto;
   contain-intrinsic-size: 1px 640px;
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight, Github, Globe, Layers, X } from 'lucide-react';
 import { EDITORIAL_EASE } from '../animations/motion';
@@ -27,9 +28,11 @@ export function ProjectModal({
 
   useEffect(() => {
     if (!project) return undefined;
-    const prevOverflow = document.body.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
     const prevFocused = document.activeElement;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
     requestAnimationFrame(() => closeRef.current?.focus());
 
@@ -39,7 +42,8 @@ export function ProjectModal({
 
     window.addEventListener('keydown', onKeyDown);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
       window.removeEventListener('keydown', onKeyDown);
       if (prevFocused instanceof HTMLElement) prevFocused.focus();
     };
@@ -89,7 +93,7 @@ export function ProjectModal({
     }
   };
 
-  return (
+  const modalTree = (
     <AnimatePresence>
       {project ? (
         <motion.div
@@ -284,5 +288,11 @@ export function ProjectModal({
       ) : null}
     </AnimatePresence>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalTree, document.body);
+  }
+
+  return modalTree;
 }
 
