@@ -10,16 +10,27 @@ const SECTION_VISUALS = {
   contacto: { icon: NimbusIcons.plane, fx: 'plane' },
 };
 
-export function FloatingNav({ sections, activeSection, sound = false, perf }) {
-  const [lockedIndex, setLockedIndex] = useState(null);
-  const lockTimerRef = useRef(0);
-
+/**
+ * Montado únicamente en escritorio para evitar suscripciones de scroll/spring en móviles.
+ */
+function ScrollProgressRail() {
   const { scrollYProgress } = useScroll();
   const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 140,
     damping: 24,
     restDelta: 0.001,
   });
+
+  return (
+    <div className="scroll-rail" aria-hidden="true">
+      <motion.div className="scroll-rail__fill" style={{ scaleY: smoothProgress }} />
+    </div>
+  );
+}
+
+export function FloatingNav({ sections, activeSection, sound = false, perf }) {
+  const [lockedIndex, setLockedIndex] = useState(null);
+  const lockTimerRef = useRef(0);
 
   const navItems = useMemo(
     () =>
@@ -75,12 +86,7 @@ export function FloatingNav({ sections, activeSection, sound = false, perf }) {
         </div>
       </div>
 
-      {/* Riel lateral discreto de progreso de lectura (solo escritorio) */}
-      {!perf?.isMobileTier ? (
-        <div className="scroll-rail" aria-hidden="true">
-          <motion.div className="scroll-rail__fill" style={{ scaleY: smoothProgress }} />
-        </div>
-      ) : null}
+      {!perf?.isMobileTier ? <ScrollProgressRail /> : null}
     </>
   );
 }

@@ -389,9 +389,20 @@
   white-space: nowrap;
 }
 
+@media (min-width: 681px) and (max-width: 860px) {
+  .nimbus-item {
+    padding: 0 12px;
+    gap: 6px;
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 680px) {
   .nimbus-nav:not([data-compact='false']) .nimbus-item {
-    padding: 0 13px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 12px;
+    justify-content: center;
   }
 
   .nimbus-nav:not([data-compact='false']) .nimbus-label {
@@ -401,6 +412,19 @@
     overflow: hidden;
     clip: rect(0 0 0 0);
     white-space: nowrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .nimbus-nav {
+    padding: 5px;
+    gap: 1px;
+  }
+
+  .nimbus-nav:not([data-compact='false']) .nimbus-item {
+    min-width: 40px;
+    height: 42px;
+    padding: 0 10px;
   }
 }
 

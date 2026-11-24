@@ -10,7 +10,7 @@
 export const portfolio = {
   meta: {
     lang: 'es',
-    title: 'Portafolio — Creative Developer',
+    title: 'Void*',
     description:
       'Portafolio interactivo con estética Liquid Glass, dirección cinematográfica y proyectos explorables.',
   },
@@ -59,20 +59,20 @@ export const portfolio = {
       credits: 'Hecho por Ludwing, Estaban, Gahel',
       role: '',
       technologies: [],
-      coverImage: '/projects/literatura-proyect.png',
+      coverImage: '/projects/literatura-proyect.jpg',
       embedUrl: 'https://literatura-proyect.vercel.app',
       gallery: [
         {
           title: 'Vista en vivo',
           caption: 'Aplicación interactiva en tiempo real desde literatura-proyect.vercel.app.',
           embedUrl: 'https://literatura-proyect.vercel.app',
-          image: '/projects/literatura-proyect.png',
+          image: '/projects/literatura-proyect.jpg',
           art: 'voidStorm',
         },
         {
           title: 'Captura principal',
           caption: 'Pantalla de inicio — Readme and Readline: lee, aprende y avanza hacia el éxito.',
-          image: '/projects/literatura-proyect.png',
+          image: '/projects/literatura-proyect.jpg',
           art: 'overcast',
         },
       ],
@@ -258,9 +258,10 @@ export const portfolio = {
 
   /**
    * Sistema de Likes y Estrellas (1–5 ★) para visitantes.
-   * - Por defecto guarda el estado real en `localStorage` (sin inflar ni inventar contadores).
-   * - Opcional: coloca en `endpoint` la URL de un servicio JSON (Cloudflare Worker, Supabase,
-   *   Upstash/Vercel API) que acepte GET y POST para compartir contadores globales entre visitantes.
+   * - Conectado a `/api/appreciation` (Vercel Serverless Function + MongoDB Atlas) para que
+   *   cualquier visitante vea y acumule los likes globales en tiempo real.
+   * - Si aún no hay `MONGODB_URI` configurada o se ejecuta sin backend local, usa respaldo
+   *   automático en `localStorage` sin inventar contadores.
    */
   appreciation: {
     enabled: true,
@@ -268,7 +269,7 @@ export const portfolio = {
     headline: '¿Te gustó el portafolio?',
     note: 'Deja una calificación con estrellas o un like si te gustó la experiencia.',
     storageKey: 'void-portfolio-appreciation-v1',
-    endpoint: '',
+    endpoint: '/api/appreciation',
   },
 };
 

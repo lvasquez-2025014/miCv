@@ -4,7 +4,7 @@ import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference'
 
 /**
  * Superficie Liquid Glass reactiva al puntero sin re-renderizados de React.
- * Actualiza --mx / --my por rAF para proyectar refracción especular y brillo de borde.
+ * En dispositivos táctiles omite las capas de brillo y máscara para ahorrar GPU/DOM.
  */
 export function LiquidSurface({
   as: Tag = 'div',
@@ -48,10 +48,13 @@ export function LiquidSurface({
       onPointerLeave={interactive ? onPointerLeave : undefined}
       {...props}
     >
-      <span className="liquid-surface__glint" aria-hidden="true" />
-      <span className="liquid-surface__rim" aria-hidden="true" />
+      {interactive ? (
+        <>
+          <span className="liquid-surface__glint" aria-hidden="true" />
+          <span className="liquid-surface__rim" aria-hidden="true" />
+        </>
+      ) : null}
       {children}
     </Tag>
   );
 }
-

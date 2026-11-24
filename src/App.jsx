@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MotionConfig } from 'framer-motion';
 import { AppreciationBar } from './components/AppreciationBar';
-import { AtmosphericCanvas } from './components/AtmosphericCanvas';
 import { FloatingNav } from './components/FloatingNav';
 import { Footer } from './components/Footer';
+import { HyperframesHeroStage } from './components/HyperframesHeroStage';
 import { IntroCurtain } from './components/IntroCurtain';
 import { PrecisionCursor } from './components/PrecisionCursor';
 import { useActiveSection } from './hooks/useActiveSection';
@@ -50,7 +50,7 @@ export default function App() {
         Ir al contenido principal
       </a>
 
-      {!perf.isLite ? <AtmosphericCanvas perf={perf} /> : null}
+      <HyperframesHeroStage introReady={introReady} perf={perf} />
       {!perf.isLite ? <div className="grain-layer" aria-hidden="true" /> : null}
       <PrecisionCursor />
 

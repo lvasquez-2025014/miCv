@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import gsap from 'gsap';
+import { useEffect, useRef, useState } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference';
 
 // Coordenadas exactas medidas sobre la escena de The Void (16:9)
@@ -55,92 +54,215 @@ function projectImagePoint(u, v, imgRect, objPos, containerRect, canvasW, canvas
 }
 
 /**
- * Escena Hero HyperFrames (The Void — 4K UHD / HD móvil adaptativo) + motor volumétrico en Canvas:
- * - Adapta automáticamente resolución, DPR, partículas y FPS según la gama del dispositivo.
- * - Mantiene la silueta de The Void, sus dos ojos blancos y la atmósfera de tormenta fluidos a 60fps.
+ * Variante ultra-fluida para teléfonos de gama baja / ahorro de datos:
+ * - Cero <canvas>, cero requestAnimationFrame, cero GSAP, cero listener de scroll.
+ * - Posiciona los 2 ojos blancos de The Void con 1 cálculo ligero al cargar/rotar
+ *   y usa un IntersectionObserver único en #inicio para suavizar el velo al bajar.
  */
-export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf }) {
+function HyperframesLiteStage() {
+  const rootRef = useRef(null);
+  const imgRef = useRef(null);
+  const [scrolledPastHero, setScrolledPastHero] = useState(false);
+  const [eyes, setEyes] = useState(null);
+
+  useEffect(() => {
+    const heroEl = document.getElementById('inicio');
+    if (!heroEl || typeof IntersectionObserver === 'undefined') return undefined;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setScrolledPastHero(!(entry?.isIntersecting ?? true));
+      },
+      { threshold: 0.28 }
+    );
+    io.observe(heroEl);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const computeEyes = () => {
+      const root = rootRef.current;
+      const img = imgRef.current;
+      if (!root || !img) return;
+      const stageRect = root.getBoundingClientRect();
+      const imgRect = img.getBoundingClientRect();
+      if (stageRect.width <= 0 || imgRect.width <= 0) return;
+      const objPos = parseObjectPosition(getComputedStyle(img).objectPosition);
+      const left = projectImagePoint(
+        LEFT_EYE.u,
+        LEFT_EYE.v,
+        imgRect,
+        objPos,
+        stageRect,
+        stageRect.width,
+        stageRect.height
+      );
+      const right = projectImagePoint(
+        RIGHT_EYE.u,
+        RIGHT_EYE.v,
+        imgRect,
+        objPos,
+        stageRect,
+        stageRect.width,
+        stageRect.height
+      );
+      setEyes({ left, right });
+    };
+
+    computeEyes();
+    imgRef.current?.addEventListener('load', computeEyes);
+    window.addEventListener('resize', computeEyes, { passive: true });
+    return () => {
+      imgRef.current?.removeEventListener('load', computeEyes);
+      window.removeEventListener('resize', computeEyes);
+    };
+  }, []);
+
+  return (
+    <div ref={rootRef} className="hf-hero-stage hf-hero-stage--lite" aria-hidden="true">
+      <div className="hf-camera-parallax">
+        <div className="hf-camera-rig">
+          <picture className="hf-bg-picture">
+            <source media="(max-width: 900px)" srcSet="/hyperframes/hero-mobile.jpg" />
+            <img
+              ref={imgRef}
+              className="hf-bg-photo"
+              src="/hyperframes/hero-mobile.jpg"
+              alt=""
+              width={1280}
+              height={720}
+              decoding="async"
+              fetchPriority="high"
+              draggable={false}
+            />
+          </picture>
+        </div>
+      </div>
+
+      {eyes ? (
+        <div className="hf-lite-eyes">
+          <span
+            className="hf-lite-eye"
+            style={{ left: `${eyes.left.x.toFixed(1)}px`, top: `${eyes.left.y.toFixed(1)}px` }}
+          />
+          <span
+            className="hf-lite-eye"
+            style={{ left: `${eyes.right.x.toFixed(1)}px`, top: `${eyes.right.y.toFixed(1)}px` }}
+          />
+        </div>
+      ) : null}
+
+      <div className="hf-vignette" />
+      <div className="hf-readability-scrim" />
+      <div
+        className={`hf-scroll-veil hf-scroll-veil--lite${scrolledPastHero ? ' hf-scroll-veil--active' : ''}`}
+      />
+    </div>
+  );
+}
+
+/**
+ * Escena Global HyperFrames (The Void — 4K UHD / HD móvil) + motor volumétrico en Canvas:
+ * - Carga GSAP de forma diferida (solo fuera de modo lite).
+ * - Adapta resolución, DPR, partículas y FPS para escritorio y móviles estándar.
+ */
+function HyperframesRichStage({ introReady, tier, reducedMotion }) {
   const rootRef = useRef(null);
   const rigRef = useRef(null);
   const imgRef = useRef(null);
   const canvasRef = useRef(null);
-  const reducedMotion = useReducedMotionPreference();
-  const tier = perf?.tier || 'high';
-  const isLite = tier === 'lite';
   const isMobile = tier !== 'high';
 
-  // Levitación cinematográfica + zoom GSAP (desactivado en modo lite para scroll nativo puro)
+  const { scrollYProgress } = useScroll();
+  const scrollScale = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [1.0, reducedMotion ? 1.0 : 1.07]
+  );
+  const veilOpacity = useTransform(scrollYProgress, [0, 0.14, 0.3], [0, 0.42, 0.62]);
+
+  // Levitación cinematográfica + zoom GSAP cargados dinámicamente
   useEffect(() => {
     const root = rootRef.current;
     const rig = rigRef.current;
     if (!root || !rig) return undefined;
 
-    if (reducedMotion || isLite) {
-      gsap.set(root, { opacity: 1 });
-      gsap.set(rig, { scale: 1.02, x: 0, y: 0 });
+    if (reducedMotion) {
+      root.style.opacity = '1';
+      rig.style.transform = 'scale(1.02)';
       return undefined;
     }
 
-    const ctx = gsap.context(() => {
-      gsap.fromTo(root, { opacity: 0.2 }, { opacity: 1, duration: 0.8, ease: 'power2.out' });
+    let cancelled = false;
+    let cleanup = () => {};
 
-      gsap.fromTo(
-        rig,
-        { scale: 1.02, x: 0, y: 4 },
-        {
-          scale: isMobile ? 1.055 : 1.095,
-          x: isMobile ? 4 : 8,
-          y: isMobile ? -5 : -9,
-          duration: isMobile ? 10 : 8.2,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-        }
-      );
-    }, root);
+    import('gsap').then(({ default: gsap }) => {
+      if (cancelled || !rootRef.current || !rigRef.current) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const inView = entry?.isIntersecting ?? true;
-        gsap.getTweensOf(rig).forEach((tw) => (inView ? tw.resume() : tw.pause()));
-      },
-      { threshold: 0.02 }
-    );
-    observer.observe(root);
+      const ctx = gsap.context(() => {
+        gsap.fromTo(root, { opacity: 0.2 }, { opacity: 1, duration: 0.8, ease: 'power2.out' });
 
-    if (isMobile) {
-      return () => {
-        observer.disconnect();
+        gsap.fromTo(
+          rig,
+          { scale: 1.02, x: 0, y: 4 },
+          {
+            scale: isMobile ? 1.05 : 1.085,
+            x: isMobile ? 4 : 8,
+            y: isMobile ? -5 : -9,
+            duration: isMobile ? 10 : 8.6,
+            repeat: -1,
+            yoyo: true,
+            ease: 'sine.inOut',
+          }
+        );
+      }, root);
+
+      const onVisibility = () => {
+        const active = !document.hidden;
+        gsap.getTweensOf(rig).forEach((tw) => (active ? tw.resume() : tw.pause()));
+      };
+      document.addEventListener('visibilitychange', onVisibility);
+
+      if (isMobile) {
+        cleanup = () => {
+          document.removeEventListener('visibilitychange', onVisibility);
+          ctx.revert();
+        };
+        return;
+      }
+
+      const quickX = gsap.quickTo('.hf-camera-parallax', 'x', { duration: 1.0, ease: 'power3.out' });
+      const quickY = gsap.quickTo('.hf-camera-parallax', 'y', { duration: 1.0, ease: 'power3.out' });
+
+      const onMove = (event) => {
+        if (event.pointerType === 'touch') return;
+        const nx = event.clientX / Math.max(1, window.innerWidth) - 0.5;
+        const ny = event.clientY / Math.max(1, window.innerHeight) - 0.5;
+        quickX(-nx * 18);
+        quickY(-ny * 12);
+      };
+
+      const onLeave = () => {
+        quickX(0);
+        quickY(0);
+      };
+
+      window.addEventListener('pointermove', onMove, { passive: true });
+      document.addEventListener('mouseleave', onLeave);
+
+      cleanup = () => {
+        document.removeEventListener('visibilitychange', onVisibility);
+        window.removeEventListener('pointermove', onMove);
+        document.removeEventListener('mouseleave', onLeave);
         ctx.revert();
       };
-    }
-
-    const quickX = gsap.quickTo('.hf-camera-parallax', 'x', { duration: 1.0, ease: 'power3.out' });
-    const quickY = gsap.quickTo('.hf-camera-parallax', 'y', { duration: 1.0, ease: 'power3.out' });
-
-    const onMove = (event) => {
-      if (event.pointerType === 'touch') return;
-      const nx = event.clientX / Math.max(1, window.innerWidth) - 0.5;
-      const ny = event.clientY / Math.max(1, window.innerHeight) - 0.5;
-      quickX(-nx * 18);
-      quickY(-ny * 12);
-    };
-
-    const onLeave = () => {
-      quickX(0);
-      quickY(0);
-    };
-
-    window.addEventListener('pointermove', onMove, { passive: true });
-    document.addEventListener('mouseleave', onLeave);
+    });
 
     return () => {
-      observer.disconnect();
-      window.removeEventListener('pointermove', onMove);
-      document.removeEventListener('mouseleave', onLeave);
-      ctx.revert();
+      cancelled = true;
+      cleanup();
     };
-  }, [reducedMotion, introReady, isLite, isMobile]);
+  }, [reducedMotion, introReady, isMobile]);
 
   // Motor Canvas adaptativo: ojos blancos de The Void, humo oscuro de vacío, rayos y tormenta
   useEffect(() => {
@@ -151,8 +273,8 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
     const ctx = canvas.getContext('2d');
     if (!ctx) return undefined;
 
-    const maxDpr = isLite ? 0.75 : isMobile ? 1 : 1.5;
-    const minFrameMs = isLite ? 50 : isMobile ? 33 : 16;
+    const maxDpr = isMobile ? 1 : 1.5;
+    const minFrameMs = isMobile ? 33 : 16;
 
     let width = 0;
     let height = 0;
@@ -160,7 +282,6 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
     let cachedObjPos = [0.5, 0.24];
     let rafId = 0;
     let lastDrawn = 0;
-    let visible = true;
     let hidden = document.hidden;
 
     const pointer = { x: -9999, y: -9999, nx: 0, ny: 0, tx: 0, ty: 0, active: false };
@@ -169,7 +290,6 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
     let nextStormAt = 1.8;
     let stormStart = -10;
 
-    // Haces volumétricos ajustados por gama
     const allRays = [
       { angle: -0.44, spread: 0.095, alpha: 0.085, speed: 0.32, phase: 0.2 },
       { angle: -0.25, spread: 0.12, alpha: 0.12, speed: 0.26, phase: 1.5 },
@@ -179,10 +299,9 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
       { angle: 0.43, spread: 0.09, alpha: 0.08, speed: 0.28, phase: 0.9 },
       { angle: 0.58, spread: 0.08, alpha: 0.055, speed: 0.21, phase: 3.4 },
     ];
-    const rays = isLite ? [] : isMobile ? allRays.slice(1, 5) : allRays;
+    const rays = isMobile ? allRays.slice(1, 5) : allRays;
 
-    // Volutas oscuras de vacío (0 en gama baja, 6 en móvil estándar, 16 en escritorio)
-    const smokeCount = isLite ? 0 : isMobile ? 6 : 16;
+    const smokeCount = isMobile ? 5 : 16;
     const voidSmoke = Array.from({ length: smokeCount }, (_, i) => ({
       x: 0,
       y: 0,
@@ -194,12 +313,10 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
       phase: i * 1.9,
     }));
 
-    // Cenizas y brasas adaptativas (8 en lite, 14 en móvil, 36 en escritorio)
-    const particleCount = isLite ? 8 : isMobile ? 14 : 36;
+    const particleCount = isMobile ? 12 : 36;
     const particles = Array.from({ length: particleCount }, (_, i) => {
-      const plane = isLite
-        ? i % 2
-        : i < Math.floor(particleCount * 0.4)
+      const plane =
+        i < Math.floor(particleCount * 0.4)
           ? 0
           : i < Math.floor(particleCount * 0.82)
             ? 1
@@ -278,7 +395,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
     };
 
     const render = (now) => {
-      if (!reducedMotion && visible && !hidden && lastDrawn && now - lastDrawn < minFrameMs) {
+      if (!reducedMotion && !hidden && lastDrawn && now - lastDrawn < minFrameMs) {
         rafId = requestAnimationFrame(render);
         return;
       }
@@ -298,7 +415,6 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
       const t = reducedMotion ? 1.0 : now * 0.001;
       const storm = Math.min(1.15, computeStormIntensity(t) + manualFlash);
 
-      // Una sola lectura de layout por frame (en vez de 3 lecturas + 3 getComputedStyle)
       const stageRect = root.getBoundingClientRect();
       const imgRect = img.getBoundingClientRect();
       const leftEye = projectImagePoint(
@@ -336,7 +452,6 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
       const midEyeX = (leftEye.x + rightEye.x) * 0.5;
       const midEyeY = (leftEye.y + rightEye.y) * 0.5;
 
-      // Intensidad sutil de la mirada al acercar el cursor
       let targetEye = 0.42 + 0.14 * Math.sin(t * 1.9);
       if (pointer.active) {
         const dist = Math.hypot(pointer.x - midEyeX, pointer.y - midEyeY);
@@ -346,7 +461,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
       targetEye = Math.min(1.25, targetEye + manualFlash * 0.5);
       eyePresence += (targetEye - eyePresence) * Math.min(1, dt * 6);
 
-      // 1. Humo oscuro de vacío desprendiéndose suavemente del borde de la capa
+      // 1. Humo oscuro de vacío
       for (let i = 0; i < voidSmoke.length; i++) {
         const m = voidSmoke[i];
         if (!reducedMotion) {
@@ -368,11 +483,11 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
         ctx.fill();
       }
 
-      // 2. Iluminación de tormenta y rayos volumétricos detrás/alrededor de The Void
+      // 2. Iluminación de tormenta y rayos volumétricos
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
 
-      const flashAlpha = 0.06 + storm * (isLite ? 0.24 : 0.38);
+      const flashAlpha = 0.06 + storm * 0.38;
       if (flashAlpha > 0.07) {
         const flashX = width * 0.5 + pointer.nx * 16;
         const flashY = height * 0.16 + pointer.ny * 10;
@@ -391,7 +506,6 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
         ctx.fillRect(0, 0, width, height);
       }
 
-      // Rayos volumétricos suaves desde el cielo nublado
       if (rays.length > 0) {
         const originX = width * 0.51 + pointer.nx * 22;
         const originY = -height * 0.14;
@@ -430,7 +544,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
         }
       }
 
-      // 3. Los dos puntos blancos mínimos e inquietantes de los ojos de The Void
+      // 3. Los dos puntos blancos mínimos de los ojos de The Void
       for (const eye of [leftEye, rightEye]) {
         const bloomR = (10 + eyePresence * 9) * sc;
         const eg = ctx.createRadialGradient(eye.x, eye.y, 0.5, eye.x, eye.y, bloomR);
@@ -442,7 +556,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
         ctx.arc(eye.x, eye.y, bloomR, 0, Math.PI * 2);
         ctx.fill();
 
-        if (!isLite && eyePresence > 0.52) {
+        if (eyePresence > 0.52) {
           const fw = (14 + (eyePresence - 0.52) * 34) * sc;
           const fg = ctx.createLinearGradient(eye.x - fw, eye.y, eye.x + fw, eye.y);
           fg.addColorStop(0, 'rgba(255, 255, 255, 0)');
@@ -473,15 +587,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
         const py = p.y * height + pointer.ny * (parallaxMul * 0.7);
         const twinkle = 0.52 + 0.48 * Math.sin(t * p.flicker + p.phase);
 
-        if (isLite) {
-          ctx.fillStyle =
-            p.plane === 1
-              ? `rgba(245, 220, 178, ${0.65 * twinkle})`
-              : `rgba(216, 232, 236, ${0.38 * twinkle})`;
-          ctx.beginPath();
-          ctx.arc(px, py, p.r * 1.35, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (p.plane === 0) {
+        if (p.plane === 0) {
           const rad = p.r * 3.0;
           const g = ctx.createRadialGradient(px, py, 0, px, py, rad);
           g.addColorStop(0, `rgba(216, 232, 236, ${0.42 * twinkle})`);
@@ -514,7 +620,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
 
       ctx.restore();
 
-      if (!reducedMotion && visible && !hidden) {
+      if (!reducedMotion && !hidden) {
         rafId = requestAnimationFrame(render);
       }
     };
@@ -532,10 +638,13 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
 
     const onPointerDown = (e) => {
       if (reducedMotion) return;
-      const rect = root.getBoundingClientRect();
-      if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
-        manualFlash = 0.85;
+      if (
+        e.target instanceof Element &&
+        e.target.closest('button, a, input, textarea, [role="button"], .gf-root, .project-modal')
+      ) {
+        return;
       }
+      manualFlash = 0.85;
     };
 
     const onLeave = () => {
@@ -546,7 +655,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
 
     const onVisibility = () => {
       hidden = document.hidden;
-      if (!hidden && visible && !reducedMotion) {
+      if (!hidden && !reducedMotion) {
         last = performance.now();
         lastDrawn = 0;
         cancelAnimationFrame(rafId);
@@ -554,21 +663,7 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
       }
     };
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        visible = entry?.isIntersecting ?? true;
-        if (visible && !hidden && !reducedMotion) {
-          last = performance.now();
-          lastDrawn = 0;
-          cancelAnimationFrame(rafId);
-          rafId = requestAnimationFrame(render);
-        }
-      },
-      { threshold: 0.02 }
-    );
-
     resize();
-    observer.observe(root);
     window.addEventListener('resize', resize);
     if (!isMobile) {
       window.addEventListener('pointermove', onPointerMove, { passive: true });
@@ -583,7 +678,6 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
 
     return () => {
       cancelAnimationFrame(rafId);
-      observer.disconnect();
       window.removeEventListener('resize', resize);
       if (!isMobile) {
         window.removeEventListener('pointermove', onPointerMove);
@@ -592,14 +686,14 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
       window.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [reducedMotion, isLite, isMobile]);
+  }, [reducedMotion, isMobile]);
 
   return (
     <motion.div
       ref={rootRef}
       className="hf-hero-stage"
       aria-hidden="true"
-      style={isLite ? undefined : { y: scrollY, scale: scrollScale }}
+      style={{ scale: scrollScale }}
     >
       <div className="hf-camera-parallax">
         <div ref={rigRef} className="hf-camera-rig">
@@ -620,12 +714,28 @@ export function HyperframesHeroStage({ introReady, scrollY, scrollScale, perf })
         </div>
       </div>
 
-      {/* Motor volumétrico adaptativo fijado a los ojos blancos y atmósfera de The Void */}
       <canvas ref={canvasRef} className="hf-vfx-canvas" />
 
       <div className="hf-vignette" />
       <div className="hf-readability-scrim" />
-      <div className="hf-bottom-fade" />
+      <motion.div className="hf-scroll-veil" style={{ opacity: veilOpacity }} />
     </motion.div>
+  );
+}
+
+export function HyperframesHeroStage({ introReady, perf }) {
+  const reducedMotion = useReducedMotionPreference();
+  const tier = perf?.tier || 'high';
+
+  if (tier === 'lite' || reducedMotion) {
+    return <HyperframesLiteStage />;
+  }
+
+  return (
+    <HyperframesRichStage
+      introReady={introReady}
+      tier={tier}
+      reducedMotion={reducedMotion}
+    />
   );
 }

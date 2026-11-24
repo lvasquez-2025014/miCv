@@ -16,7 +16,12 @@ export function detectPerformanceTier() {
 
   const nav = typeof navigator !== 'undefined' ? navigator : {};
   const conn = nav.connection || nav.mozConnection || nav.webkitConnection;
-  if (conn?.saveData || conn?.effectiveType === '2g' || conn?.effectiveType === 'slow-2g') {
+  if (
+    conn?.saveData ||
+    conn?.effectiveType === '2g' ||
+    conn?.effectiveType === 'slow-2g' ||
+    conn?.effectiveType === '3g'
+  ) {
     return 'lite';
   }
 
@@ -31,7 +36,8 @@ export function detectPerformanceTier() {
   }
 
   if (isMobileLike) {
-    if ((cores > 0 && cores <= 4) || (memory > 0 && memory <= 4)) {
+    const narrowTouch = isCoarse && Math.min(window.innerWidth, window.screen?.width || 999) <= 380;
+    if ((cores > 0 && cores <= 4) || (memory > 0 && memory <= 4) || narrowTouch) {
       return 'lite';
     }
     return 'medium';

@@ -27,3 +27,4 @@ export async function getAppreciationCollection() {
   const client = await globalThis._voidPortfolioMongoPromise;
   return client.db(DEFAULT_DB).collection(DEFAULT_COLLECTION);
 }
+

@@ -22,8 +22,37 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
   const [hydrated, setHydrated] = useState(false);
   const stateRef = useRef(state);
   stateRef.current = state;
+  const lastRemoteFetchRef = useRef(0);
 
-  // Hidratación segura tras montar (evita desajustes SSR/CSR) + carga opcional remota
+  const applyRemoteTotals = useCallback(
+    (remote) => {
+      if (!remote) return;
+      setState((prev) => {
+        const remoteProjectLikes = remote.projectLikes || {};
+        const syncedLikedProjects = {};
+        for (const id of Object.keys(prev.likedProjects || {})) {
+          if ((remoteProjectLikes[id] || 0) > 0) syncedLikedProjects[id] = true;
+        }
+
+        const merged = normalizeAppreciationState({
+          ...prev,
+          portfolioLiked: remote.portfolioLikes > 0 ? prev.portfolioLiked : false,
+          userRating: remote.ratingsCount > 0 ? prev.userRating : 0,
+          likedProjects: syncedLikedProjects,
+          portfolioLikes: remote.portfolioLikes,
+          ratingSum: remote.ratingSum,
+          ratingsCount: remote.ratingsCount,
+          projectLikes: remoteProjectLikes,
+          mode: 'remote',
+        });
+        writeLocalAppreciation(merged, storageKey);
+        return merged;
+      });
+    },
+    [storageKey]
+  );
+
+  // Hidratación segura tras montar (evita desajustes SSR/CSR) + sincronización MongoDB
   useEffect(() => {
     const local = readLocalAppreciation(storageKey);
     setState(local);
@@ -32,26 +61,22 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
     if (!endpoint) return undefined;
 
     const controller = new AbortController();
-    fetchRemoteAppreciation(endpoint, controller.signal).then((remote) => {
-      if (!remote) return;
-      setState((prev) => {
-        const merged = normalizeAppreciationState({
-          ...prev,
-          portfolioLikes: Math.max(prev.portfolioLiked ? 1 : 0, remote.portfolioLikes),
-          ratingSum: Math.max(prev.userRating, remote.ratingSum),
-          ratingsCount: Math.max(prev.userRating > 0 ? 1 : 0, remote.ratingsCount),
-          projectLikes: remote.projectLikes
-            ? { ...prev.projectLikes, ...remote.projectLikes }
-            : prev.projectLikes,
-          mode: 'remote',
-        });
-        writeLocalAppreciation(merged, storageKey);
-        return merged;
-      });
-    });
+    lastRemoteFetchRef.current = Date.now();
+    fetchRemoteAppreciation(endpoint, controller.signal).then(applyRemoteTotals);
 
-    return () => controller.abort();
-  }, [storageKey, endpoint]);
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - lastRemoteFetchRef.current < 15000) return;
+      lastRemoteFetchRef.current = Date.now();
+      fetchRemoteAppreciation(endpoint).then(applyRemoteTotals);
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      controller.abort();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [storageKey, endpoint, applyRemoteTotals]);
 
   // Sincronización entre pestañas
   useEffect(() => {
@@ -73,7 +98,7 @@ export function useAppreciation(config, { soundEnabled = false } = {}) {
           ...(patch.portfolioLikes !== undefined ? { portfolioLikes: patch.portfolioLikes } : {}),
           ...(patch.ratingSum !== undefined ? { ratingSum: patch.ratingSum } : {}),
           ...(patch.ratingsCount !== undefined ? { ratingsCount: patch.ratingsCount } : {}),
-          ...(patch.projectLikes ? { projectLikes: { ...prev.projectLikes, ...patch.projectLikes } } : {}),
+          ...(patch.projectLikes !== undefined ? { projectLikes: patch.projectLikes } : {}),
           mode: 'remote',
         });
         writeLocalAppreciation(next, storageKey);

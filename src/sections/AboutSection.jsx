@@ -1,12 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { EDITORIAL_EASE, fadeUpVariants, viewportOnce } from '../animations/motion';
 import { LiquidSurface } from '../components/LiquidSurface';
 import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference';
-
-gsap.registerPlugin(ScrollTrigger);
 
 export function AboutSection({ about, perf }) {
   const statementRef = useRef(null);
@@ -19,25 +15,37 @@ export function AboutSection({ about, perf }) {
     const words = statementRef.current.querySelectorAll('.scrub-word');
     if (!words.length) return undefined;
 
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        words,
-        { opacity: 0.25 },
-        {
-          opacity: 1,
-          stagger: 0.08,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: statementRef.current,
-            start: 'top 84%',
-            end: 'bottom 52%',
-            scrub: true,
-          },
-        }
-      );
-    }, statementRef);
+    let cancelled = false;
+    let ctx = null;
 
-    return () => ctx.revert();
+    Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(
+      ([{ default: gsap }, { ScrollTrigger }]) => {
+        if (cancelled || !statementRef.current) return;
+        gsap.registerPlugin(ScrollTrigger);
+        ctx = gsap.context(() => {
+          gsap.fromTo(
+            words,
+            { opacity: 0.25 },
+            {
+              opacity: 1,
+              stagger: 0.08,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: statementRef.current,
+                start: 'top 84%',
+                end: 'bottom 52%',
+                scrub: true,
+              },
+            }
+          );
+        }, statementRef);
+      }
+    );
+
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
   }, [about?.headline, skipScrub]);
 
   if (!about) return null;

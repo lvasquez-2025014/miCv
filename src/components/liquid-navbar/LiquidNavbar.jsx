@@ -421,6 +421,20 @@ export function LiquidNavbar({
     T.cy = PAD + el.offsetTop + el.offsetHeight / 2;
     const nx = PAD + el.offsetLeft + el.offsetWidth / 2;
 
+    if (tierRef.current === 'lite') {
+      s.a.x = s.b.x = nx;
+      s.q = T.q;
+      s.ready = true;
+      s.moving = false;
+      if (dropRef.current) {
+        const left = nx - T.q - T.r - PAD;
+        const width = 2 * (T.q + T.r);
+        dropRef.current.style.width = `${width}px`;
+        dropRef.current.style.transform = `translateX(${left}px)`;
+      }
+      return;
+    }
+
     if (!s.ready) {
       s.a.x = s.b.x = nx;
       s.q = T.q;
@@ -534,7 +548,7 @@ export function LiquidNavbar({
 
   const ripple = (x, y, amp) => {
     const s = st.current;
-    if (s.reduce) return;
+    if (s.reduce || tierRef.current === 'lite') return;
     s.rips.push({ x, y, age: 0, amp });
     loop();
   };
@@ -572,9 +586,11 @@ export function LiquidNavbar({
     const kind = items[i]?.fx ?? (items[i]?.icon ? 'pop' : 'none');
     setFx((f) => ({ i, n: f.n + 1 }));
     plip();
-    const c = iconCenter(i);
-    if (c && kind === 'drop') setTimeout(() => ripple(c.x, st.current.t.cy, 1.4), 430);
-    if (c && kind === 'plane') ripple(c.x, c.y, 0.6);
+    if (tierRef.current !== 'lite') {
+      const c = iconCenter(i);
+      if (c && kind === 'drop') setTimeout(() => ripple(c.x, st.current.t.cy, 1.4), 430);
+      if (c && kind === 'plane') ripple(c.x, c.y, 0.6);
+    }
     if (i !== current) {
       if (active === undefined) setInner(i);
       onChange?.(i, items[i]);
@@ -590,7 +606,7 @@ export function LiquidNavbar({
   };
 
   const onMove = (e) => {
-    if (e.pointerType !== 'mouse' || !navRef.current) return;
+    if (e.pointerType !== 'mouse' || tierRef.current === 'lite' || !navRef.current) return;
     const p = local(e.clientX, e.clientY);
     const s = st.current;
     s.mouse.x = p.x;
@@ -612,10 +628,10 @@ export function LiquidNavbar({
       onPointerMove={onMove}
       onPointerLeave={() => {
         st.current.mouse.on = false;
-        loop();
+        if (tierRef.current !== 'lite') loop();
       }}
       onPointerDown={(e) => {
-        if (!navRef.current) return;
+        if (!navRef.current || tierRef.current === 'lite') return;
         const p = local(e.clientX, e.clientY);
         ripple(p.x, p.y, 0.8);
       }}
@@ -651,7 +667,9 @@ export function LiquidNavbar({
       ) : null}
 
       <span className="nimbus-glass" aria-hidden="true" />
-      <canvas className="nimbus-water" ref={canvasRef} aria-hidden="true" />
+      {perfTier !== 'lite' ? (
+        <canvas className="nimbus-water" ref={canvasRef} aria-hidden="true" />
+      ) : null}
       <span className="nimbus-drop" ref={dropRef} aria-hidden="true" />
 
       {items.map((item, i) => {

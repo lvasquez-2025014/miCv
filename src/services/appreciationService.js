@@ -43,6 +43,8 @@ export function normalizeAppreciationState(raw) {
     }
   }
 
+  const isRemote = raw.mode === 'remote';
+
   const projectLikes = {};
   if (raw.projectLikes && typeof raw.projectLikes === 'object') {
     for (const [id, count] of Object.entries(raw.projectLikes)) {
@@ -50,16 +52,24 @@ export function normalizeAppreciationState(raw) {
       if (safe > 0) projectLikes[id] = safe;
     }
   }
-  for (const id of Object.keys(likedProjects)) {
-    if (!projectLikes[id]) projectLikes[id] = 1;
+  if (!isRemote) {
+    for (const id of Object.keys(likedProjects)) {
+      if (!projectLikes[id]) projectLikes[id] = 1;
+    }
   }
 
   const portfolioLiked = Boolean(raw.portfolioLiked);
-  const portfolioLikes = Math.max(portfolioLiked ? 1 : 0, nonNegInt(raw.portfolioLikes));
+  const portfolioLikes = isRemote
+    ? nonNegInt(raw.portfolioLikes)
+    : Math.max(portfolioLiked ? 1 : 0, nonNegInt(raw.portfolioLikes));
 
   const userRating = clampRating(raw.userRating);
-  const ratingsCount = Math.max(userRating > 0 ? 1 : 0, nonNegInt(raw.ratingsCount));
-  const ratingSum = Math.max(userRating, nonNegInt(raw.ratingSum));
+  const ratingsCount = isRemote
+    ? nonNegInt(raw.ratingsCount)
+    : Math.max(userRating > 0 ? 1 : 0, nonNegInt(raw.ratingsCount));
+  const ratingSum = isRemote
+    ? nonNegInt(raw.ratingSum)
+    : Math.max(userRating, nonNegInt(raw.ratingSum));
 
   return {
     portfolioLiked,
@@ -69,7 +79,7 @@ export function normalizeAppreciationState(raw) {
     ratingsCount,
     projectLikes,
     likedProjects,
-    mode: raw.mode === 'remote' ? 'remote' : 'local',
+    mode: isRemote ? 'remote' : 'local',
   };
 }
 
@@ -99,9 +109,12 @@ export async function fetchRemoteAppreciation(endpoint, signal) {
     const response = await fetch(endpoint, {
       method: 'GET',
       headers: { Accept: 'application/json' },
+      cache: 'no-store',
       signal,
     });
     if (!response.ok) return null;
+    const ct = response.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) return null;
     const data = await response.json();
     if (!data || typeof data !== 'object') return null;
     return {
@@ -109,7 +122,7 @@ export async function fetchRemoteAppreciation(endpoint, signal) {
       ratingSum: nonNegInt(data.ratingSum),
       ratingsCount: nonNegInt(data.ratingsCount),
       projectLikes:
-        data.projectLikes && typeof data.projectLikes === 'object' ? data.projectLikes : null,
+        data.projectLikes && typeof data.projectLikes === 'object' ? data.projectLikes : {},
     };
   } catch {
     return null;
@@ -128,6 +141,8 @@ export async function sendRemoteAppreciation(endpoint, payload) {
       body: JSON.stringify(payload),
     });
     if (!response.ok) return null;
+    const ct = response.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) return null;
     const data = await response.json().catch(() => null);
     if (!data || typeof data !== 'object') return null;
     return {

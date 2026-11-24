@@ -30,12 +30,15 @@ Todo el contenido editable (nombre, proyectos, enlaces, experiencia, contacto y 
 
 - `src/data/portfolio.js`
 
-## Despliegue en Vercel
+## Despliegue en Vercel y MongoDB Atlas
 
-El proyecto ya incluye `vercel.json` listo para importar directamente desde GitHub:
+El proyecto incluye `vercel.json` y la función serverless `api/appreciation.js` lista para guardar likes y calificaciones globales en **MongoDB Atlas**:
 
-1. Importa este repositorio en [Vercel](https://vercel.com/new).
-2. Vercel detectará automáticamente **Vite** y aplicará `vercel.json` (`pnpm install --frozen-lockfile`, `pnpm run build`, salida en `dist`).
-3. En **Settings → Environment Variables**, agrega `ENABLE_EXPERIMENTAL_COREPACK=1` para garantizar que Vercel utilice exactamente `pnpm@12.9.1` definido en `package.json`.
-4. Pulsa **Deploy**.
+1. Crea un clúster gratuito (M0) en [MongoDB Atlas](https://www.mongodb.com/atlas), habilita acceso de red `0.0.0.0/0` y copia tu cadena de conexión (`MONGODB_URI`).
+2. Importa este repositorio en [Vercel](https://vercel.com/new) — Vercel detectará automáticamente **Vite** y aplicará `vercel.json` (`pnpm install --frozen-lockfile`, `pnpm run build`, salida en `dist`).
+3. En **Settings → Environment Variables**, agrega:
+   - `ENABLE_EXPERIMENTAL_COREPACK` = `1`
+   - `MONGODB_URI` = tu cadena `mongodb+srv://...`
+   - `MONGODB_DB` = `portfolio_cv` *(opcional)*
+4. Pulsa **Deploy**. Cualquier visitante verá y acumulará en tiempo real los likes y estrellas globales guardados en MongoDB.
 

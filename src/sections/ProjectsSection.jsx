@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { EDITORIAL_EASE, fadeUpVariants, viewportOnce } from '../animations/motion';
 import GlassFolder from '../components/glass-folder/GlassFolder';
-import { ProjectModal } from '../components/ProjectModal';
 
 function ProjectFolderPedestal({
   project,
@@ -14,7 +13,7 @@ function ProjectFolderPedestal({
   onInspect,
 }) {
   const slotRef = useRef(null);
-  const [folderWidth, setFolderWidth] = useState(332);
+  const [folderWidth, setFolderWidth] = useState(324);
 
   useEffect(() => {
     const el = slotRef.current;
@@ -23,7 +22,7 @@ function ProjectFolderPedestal({
     const update = () => {
       const available = el.clientWidth;
       if (available > 0) {
-        setFolderWidth(Math.min(340, Math.max(256, Math.floor(available - 12))));
+        setFolderWidth(Math.min(340, Math.max(236, Math.floor(available - 8))));
       }
     };
 
@@ -105,13 +104,27 @@ export function ProjectsSection({ projects, categories, appreciation }) {
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [openFolderId, setOpenFolderId] = useState(null);
   const [modalState, setModalState] = useState({ project: null, slide: 0 });
+  const [ModalComponent, setModalComponent] = useState(null);
+
+  const loadModal = () => {
+    if (ModalComponent) return;
+    import('../components/ProjectModal').then((mod) => {
+      setModalComponent(() => mod.ProjectModal);
+    });
+  };
 
   const visibleProjects =
     activeCategory === 'Todos'
       ? projects
       : projects.filter((project) => project.category === activeCategory);
 
+  const handleToggleOpen = (nextId) => {
+    if (nextId) loadModal();
+    setOpenFolderId(nextId);
+  };
+
   const handleInspect = (project, slide = 0) => {
+    loadModal();
     setModalState({ project, slide });
   };
 
@@ -172,25 +185,27 @@ export function ProjectsSection({ projects, categories, appreciation }) {
               isOpen={openFolderId === project.id}
               hasAnyOpen={openFolderId !== null}
               likeCount={appreciation?.projectLikes?.[project.id] || 0}
-              onToggleOpen={setOpenFolderId}
+              onToggleOpen={handleToggleOpen}
               onInspect={handleInspect}
             />
           ))}
         </div>
       </div>
 
-      <ProjectModal
-        project={modalState.project}
-        initialSlide={modalState.slide}
-        isLiked={Boolean(modalProjectId && appreciation?.likedProjects?.[modalProjectId])}
-        likeCount={modalProjectId ? appreciation?.projectLikes?.[modalProjectId] || 0 : 0}
-        onToggleLike={
-          modalProjectId && appreciation
-            ? () => appreciation.toggleProjectLike(modalProjectId)
-            : undefined
-        }
-        onClose={() => setModalState({ project: null, slide: 0 })}
-      />
+      {ModalComponent ? (
+        <ModalComponent
+          project={modalState.project}
+          initialSlide={modalState.slide}
+          isLiked={Boolean(modalProjectId && appreciation?.likedProjects?.[modalProjectId])}
+          likeCount={modalProjectId ? appreciation?.projectLikes?.[modalProjectId] || 0 : 0}
+          onToggleLike={
+            modalProjectId && appreciation
+              ? () => appreciation.toggleProjectLike(modalProjectId)
+              : undefined
+          }
+          onClose={() => setModalState({ project: null, slide: 0 })}
+        />
+      ) : null}
     </section>
   );
 }

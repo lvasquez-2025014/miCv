@@ -21,15 +21,16 @@ html {
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(92% 65% at 50% 0%, rgba(118, 138, 134, 0.16), transparent 55%),
-    radial-gradient(80% 62% at 15% 42%, rgba(74, 92, 90, 0.14), transparent 56%),
-    radial-gradient(75% 60% at 86% 78%, rgba(164, 184, 178, 0.08), transparent 58%),
-    linear-gradient(180deg, #070a0c 0%, #0d1316 48%, #070a0c 100%);
-  background-attachment: fixed;
+  background-color: var(--bg-deep);
   color: var(--ink);
   overflow-x: clip;
   position: relative;
+}
+
+#contenido,
+.site-footer {
+  position: relative;
+  z-index: var(--z-content);
 }
 
 ::selection {
@@ -40,6 +41,7 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+  touch-action: manipulation;
 }
 
 button {
@@ -48,6 +50,11 @@ button {
   background: none;
   border: none;
   cursor: pointer;
+  touch-action: manipulation;
+}
+
+.magnetic-static {
+  display: inline-flex;
 }
 
 img,
@@ -163,12 +170,13 @@ canvas {
 
 .section-heading {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4.4vw, 3.85rem);
+  font-size: clamp(1.75rem, 4.4vw, 3.85rem);
   font-weight: 600;
-  line-height: 1.04;
+  line-height: 1.06;
   letter-spacing: -0.036em;
   color: var(--ink);
   max-width: 19ch;
+  overflow-wrap: break-word;
 }
 
 .section-heading em {
@@ -423,6 +431,13 @@ canvas {
   .btn-glass {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --gutter: 1rem;
+    --section-space: clamp(3.35rem, 8vw, 5rem);
   }
 }
 

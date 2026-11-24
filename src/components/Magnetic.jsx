@@ -4,20 +4,15 @@ import { SPRING_MAGNETIC } from '../animations/motion';
 import { useFinePointer } from '../hooks/useFinePointer';
 import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference';
 
-export function Magnetic({ children, strength = 0.28, className = '' }) {
+function MagneticActive({ children, strength, className }) {
   const ref = useRef(null);
-  const isFine = useFinePointer();
-  const reducedMotion = useReducedMotionPreference();
-
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const smoothX = useSpring(x, SPRING_MAGNETIC);
   const smoothY = useSpring(y, SPRING_MAGNETIC);
 
-  const enabled = isFine && !reducedMotion;
-
   const handleMouseMove = (event) => {
-    if (!enabled || !ref.current) return;
+    if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     const dx = event.clientX - (rect.left + rect.width / 2);
     const dy = event.clientY - (rect.top + rect.height / 2);
@@ -29,10 +24,6 @@ export function Magnetic({ children, strength = 0.28, className = '' }) {
     x.set(0);
     y.set(0);
   };
-
-  if (!enabled) {
-    return <span className={className}>{children}</span>;
-  }
 
   return (
     <motion.span
@@ -47,3 +38,20 @@ export function Magnetic({ children, strength = 0.28, className = '' }) {
   );
 }
 
+/**
+ * En pantallas táctiles evita instanciar motionValues y springs innecesarios.
+ */
+export function Magnetic({ children, strength = 0.28, className = '' }) {
+  const isFine = useFinePointer();
+  const reducedMotion = useReducedMotionPreference();
+
+  if (!isFine || reducedMotion) {
+    return <span className={`magnetic-static${className ? ` ${className}` : ''}`}>{children}</span>;
+  }
+
+  return (
+    <MagneticActive strength={strength} className={className}>
+      {children}
+    </MagneticActive>
+  );
+}

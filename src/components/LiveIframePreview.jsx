@@ -13,8 +13,9 @@ function formatHost(url) {
 }
 
 /**
- * Visor Liquid Glass con iframe responsivo escalado desde 1280×800 para mostrar
- * aplicaciones web en vivo con proporción de escritorio real y póster de respaldo.
+ * Visor Liquid Glass con iframe adaptativo:
+ * - En pantallas >= 480px muestra proporción escritorio 1280×800 escalada con nitidez.
+ * - En teléfonos (< 480px) usa ancho nativo 100% para que el sitio sea legible y táctil.
  */
 export function LiveIframePreview({
   url,
@@ -26,6 +27,7 @@ export function LiveIframePreview({
 }) {
   const viewportRef = useRef(null);
   const [scale, setScale] = useState(compact ? 0.28 : 0.42);
+  const [isNarrow, setIsNarrow] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -40,6 +42,7 @@ export function LiveIframePreview({
     const update = () => {
       const w = el.clientWidth;
       if (w > 0) {
+        setIsNarrow(!compact && window.innerWidth <= 520);
         setScale(w / DESKTOP_W);
       }
     };
@@ -48,7 +51,7 @@ export function LiveIframePreview({
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [compact]);
 
   const host = formatHost(url);
 
@@ -57,6 +60,7 @@ export function LiveIframePreview({
       className={[
         'live-frame',
         compact ? 'live-frame--compact' : 'live-frame--modal',
+        isNarrow ? 'live-frame--native' : '',
         className,
       ]
         .filter(Boolean)
@@ -115,6 +119,7 @@ export function LiveIframePreview({
             aria-hidden="true"
             className={`live-frame__poster${loaded ? ' live-frame__poster--hidden' : ''}`}
             loading="lazy"
+            decoding="async"
           />
         ) : null}
 
@@ -131,15 +136,18 @@ export function LiveIframePreview({
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
           onLoad={() => setLoaded(true)}
-          className={`live-frame__iframe${loaded ? ' live-frame__iframe--ready' : ''}`}
-          style={{
-            width: `${DESKTOP_W}px`,
-            height: `${DESKTOP_H}px`,
-            transform: `scale(${scale})`,
-          }}
+          className={`live-frame__iframe${loaded ? ' live-frame__iframe--ready' : ''}${isNarrow ? ' live-frame__iframe--native' : ''}`}
+          style={
+            isNarrow
+              ? undefined
+              : {
+                  width: `${DESKTOP_W}px`,
+                  height: `${DESKTOP_H}px`,
+                  transform: `scale(${scale})`,
+                }
+          }
         />
       </div>
     </div>
   );
 }
-
